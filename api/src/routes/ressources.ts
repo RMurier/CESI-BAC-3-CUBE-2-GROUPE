@@ -74,7 +74,7 @@ router.delete(
 
       res
         .status(204)
-        .json(`La ressource (id:${ressourceId}) a été supprimé avec succès.`);
+        .json(`La ressource (id:${id}) a été supprimé avec succès.`);
     } catch (e) {
       console.error(e);
       res.status(500).json({ error: "Internal server error", details: e });
@@ -89,6 +89,14 @@ router.put(
       const id = parseInt(req.params.ressourceId);
 
       const { title, description, isActive, categoryId } = req.body;
+
+      const category = await prisma.category.findFirst({
+        where: { id: categoryId },
+      });
+
+      if (!category) {
+        res.status(400).json({ error: "Category not found" });
+      }
 
       const updatedRessource = await prisma.ressource.update({
         where: {
@@ -105,7 +113,15 @@ router.put(
           },
         },
       });
+
+      res
+        .status(200)
+        .json({
+          message: `L'utilisateur ${req.params.userId} a bien été mis-à-jour.`,
+          data: updatedRessource,
+        });
     } catch (e) {
+      console.log(e);
       res.status(500).json({ error: "Internal server error", details: e });
     }
   }
