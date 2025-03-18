@@ -2,6 +2,7 @@ import express from "express";
 import prisma from "../utils/database";
 import { TypedRequestBody } from "../types/express";
 import { RessourceCreateBody, RessourceEntity } from "../types/ressources";
+import { connect } from "mongoose";
 
 const router = express.Router();
 
@@ -17,6 +18,20 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/:ressourceId", async (req, res) => {
+  try {
+    const id = parseInt(req.params.ressourceId);
+
+    const ressource = await prisma.ressource.findFirst({ where: { id } });
+
+    if (!ressource) {
+      res.status(400).json({ error: "Ressource not found" });
+    } else {
+      res.status(200).json({ data: ressource });
+    }
+  } catch (e) {}
+});
+
 router.post<{}, any, RessourceEntity>(
   "/",
   async (req: TypedRequestBody<RessourceCreateBody>, res) => {
@@ -29,7 +44,6 @@ router.post<{}, any, RessourceEntity>(
 
       if (!category) {
         res.status(400).json({ error: "Category not found" });
-        return;
       }
 
       const newRessource = await prisma.ressource.create({
@@ -54,15 +68,44 @@ router.delete(
   "/:ressourceId",
   async (req: TypedRequestBody<RessourceEntity>, res) => {
     try {
-      const ressourceId = req.params.ressourceId;
+      const id = parseInt(req.params.ressourceId);
 
-      await prisma.ressource.delete({ where: { id: parseInt(ressourceId) } });
+      await prisma.ressource.delete({ where: { id } });
 
       res
         .status(204)
         .json(`La ressource (id:${ressourceId}) a été supprimé avec succès.`);
     } catch (e) {
       console.error(e);
+      res.status(500).json({ error: "Internal server error", details: e });
+    }
+  }
+);
+
+router.put(
+  "/:ressourceId",
+  async (req: TypedRequestBody<RessourceEntity>, res) => {
+    try {
+      const id = parseInt(req.params.ressourceId);
+
+      const { title, description, isActive, categoryId } = req.body;
+
+      const updatedRessource = await prisma.ressource.update({
+        where: {
+          id,
+        },
+        data: {
+          title,
+          description,
+          isActive,
+          category: {
+            connect: {
+              id: categoryId,
+            },
+          },
+        },
+      });
+    } catch (e) {
       res.status(500).json({ error: "Internal server error", details: e });
     }
   }
