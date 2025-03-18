@@ -35,7 +35,7 @@ model Ressource {
   title       String
   description String
   createdAt   DateTime @default(now())
-  modifiedAt  DateTime
+  modifiedAt  DateTime @default(now())
   isActive    Boolean  @default(true)
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])
