@@ -1,21 +1,36 @@
-import * as dotenv from "dotenv";
-import express from "express";
-import cors from "cors";
+import "dotenv/config";
+import express, { json } from "express";
+import prisma from "./utils/database";
+import ressources from "./routes/ressources";
 import helmet from "helmet";
+import { clerkMiddleware } from "@clerk/express";
 
-if (!process.env.PORT) {
+async function main() {
+  const app = express();
+  const port = 3000;
+
+  app.use(express.json());
+  app.use(helmet());
+  app.use(express.urlencoded({ extended: false }));
+  app.use(clerkMiddleware());
+
+  // ROUTES
+  app.use("/ressources", ressources);
+
+  app.listen(port, () => {
+    console.log(`App running and listening on http://127.0.0.1:${port}`);
+  });
+  app.get("/", (req, res) => {
+    res.send("Hello World!");
+  });
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
     process.exit(1);
- }
- 
- const PORT: number = parseInt(process.env.PORT as string, 10);
- 
- const app = express();
- app.use(helmet());
-app.use(cors());
-app.use(express.json());
-
-dotenv.config();
-
-app.listen(PORT, () => {
-    console.log(`Listening on port ${PORT}`);
   });
