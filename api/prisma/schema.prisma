@@ -27,23 +27,28 @@ model Category {
   id          Int         @id @default(autoincrement())
   name        String
   description String
+  isActive    Boolean     @default(true)
   ressources  Ressource[]
 }
 
 model Ressource {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  createdAt   DateTime @default(now())
-  modifiedAt  DateTime @default(now()) @updatedAt
-  isActive    Boolean  @default(true)
-  categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
+  id              Int           @id @default(autoincrement())
+  title           String
+  description     String
+  createdAt       DateTime      @default(now())
+  modifiedAt      DateTime      @default(now()) @updatedAt
+  isActive        Boolean       @default(true)
+  categoryId      Int
+  category        Category      @relation(fields: [categoryId], references: [id])
+  ressourceTypeId Int
+  ressourceType   RessourceType @relation(fields: [ressourceTypeId], references: [id])
 }
 
 model RessourceType {
-  id   Int    @id @default(autoincrement())
-  name String
+  id        Int         @id @default(autoincrement())
+  name      String
+  isActive  Boolean     @default(true)
+  Ressource Ressource[]
 }
 
 model Comment {

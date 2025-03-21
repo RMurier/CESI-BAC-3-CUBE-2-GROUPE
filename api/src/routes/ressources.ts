@@ -29,21 +29,30 @@ router.get("/:ressourceId", async (req, res) => {
     } else {
       res.status(200).json({ data: ressource });
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Internal server error", details: e });
+  }
 });
 
 router.post<{}, any, RessourceEntity>(
   "/",
   async (req: TypedRequestBody<RessourceCreateBody>, res) => {
-    const { title, description, categoryId } = req.body;
+    const { title, description, categoryId, ressourceTypeId } = req.body;
 
     try {
       const category = await prisma.category.findFirst({
         where: { id: categoryId },
       });
-
       if (!category) {
         res.status(400).json({ error: "Category not found" });
+      }
+
+      const ressourceType = await prisma.ressourceType.findFirst({
+        where: { id: ressourceTypeId },
+      });
+      if (!ressourceType) {
+        res.status(400).json({ error: "Ressource type not found" });
       }
 
       const newRessource = await prisma.ressource.create({
@@ -52,6 +61,9 @@ router.post<{}, any, RessourceEntity>(
           description,
           category: {
             connect: { id: categoryId },
+          },
+          ressourceType: {
+            connect: { id: ressourceTypeId },
           },
         },
       });
@@ -88,14 +100,21 @@ router.put(
     try {
       const id = parseInt(req.params.ressourceId);
 
-      const { title, description, isActive, categoryId } = req.body;
+      const { title, description, isActive, categoryId, ressourceTypeId } =
+        req.body;
 
       const category = await prisma.category.findFirst({
         where: { id: categoryId },
       });
-
       if (!category) {
         res.status(400).json({ error: "Category not found" });
+      }
+
+      const ressourceType = await prisma.ressourceType.findFirst({
+        where: { id: ressourceTypeId },
+      });
+      if (!ressourceType) {
+        res.status(400).json({ error: "Ressource type not found" });
       }
 
       const updatedRessource = await prisma.ressource.update({
@@ -111,15 +130,18 @@ router.put(
               id: categoryId,
             },
           },
+          ressourceType: {
+            connect: {
+              id: ressourceTypeId,
+            },
+          },
         },
       });
 
-      res
-        .status(200)
-        .json({
-          message: `L'utilisateur ${req.params.userId} a bien été mis-à-jour.`,
-          data: updatedRessource,
-        });
+      res.status(200).json({
+        message: `La ressource ${id} a bien été mis-à-jour.`,
+        data: updatedRessource,
+      });
     } catch (e) {
       console.log(e);
       res.status(500).json({ error: "Internal server error", details: e });
