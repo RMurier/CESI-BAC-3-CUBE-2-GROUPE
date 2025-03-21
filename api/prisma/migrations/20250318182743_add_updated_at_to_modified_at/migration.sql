@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Ressource" ALTER COLUMN "modifiedAt" SET DEFAULT CURRENT_TIMESTAMP;

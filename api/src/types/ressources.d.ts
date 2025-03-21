@@ -13,3 +13,9 @@ export type RessourceTypeEntity = {
   id: number;
   name: string;
 };
+
+export interface RessourceCreateBody {
+  title: string;
+  description: string;
+  categoryId: number;
+}
