@@ -45,10 +45,10 @@ model Ressource {
 }
 
 model RessourceType {
-  id        Int         @id @default(autoincrement())
-  name      String
-  isActive  Boolean     @default(true)
-  Ressource Ressource[]
+  id         Int         @id @default(autoincrement())
+  name       String
+  isActive   Boolean     @default(true)
+  ressources Ressource[]
 }
 
 model Comment {
