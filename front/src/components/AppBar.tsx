@@ -1,34 +1,55 @@
-import { useUser, SignOutButton } from "@clerk/clerk-react";
+import { useUser, SignOutButton, useClerk } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function AppBar() {
     const { user, isLoaded } = useUser();
     const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+    const { signOut } = useClerk();
+    const navigate = useNavigate();
 
     const checkRole = async () => {
-        console.log(user)
-        if (user) {
-            try {
-                const res = await fetch(`/api/roles/${user.id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setIsAdmin(data.isAdmin);
-                } else {
-                    setIsAdmin(false);
-                }
-            } catch (err) {
-                console.error("Erreur lors de la vérification du rôle :", err);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_BASE_URL}/users/${user?.id}`);
+            console.log(res.status)
+            if (res.ok) {
+                const data = await res.json();
+                setIsAdmin(data.roleId === 3 || data.roleId === 4);
+            } else {
                 setIsAdmin(false);
             }
+        } catch (err) {
+            console.error("Erreur lors de la vérification du rôle :", err);
+            setIsAdmin(false);
         }
     };
 
-    useEffect(() => {
-        checkRole();
-    }, []);
 
-    if (!isLoaded) return null;
+    useEffect(() => {
+        if (isLoaded && user) {
+            checkRole();
+        }
+    }, [isLoaded, user]);
+
+
+    useEffect(() => {
+        if (isAdmin === false) {
+            (async () => {
+                await signOut();
+                navigate("/");
+            })();
+        }
+    }, [isAdmin, signOut, navigate]);
+
+    if (!isLoaded) {
+        return (
+            <div className="p-4 text-gray-500 text-sm">
+                Chargement...
+            </div>
+        );
+    }
+
+    if (!isAdmin) return <h1>Vous n'êtes pas administrateur</h1>;
 
     if (!user) {
         return (

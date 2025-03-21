@@ -23,4 +23,22 @@ router.post<{}, any, User>("/", async (req, res) => {
   }
 });
 
+router.get("/:clerkId", async (req, res) => {
+  const id = req.params.clerkId;
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        clerkUserId: id
+      }
+    });
+
+    res.status(200).json(user);
+  }
+  catch(e){
+    console.error(e);
+    res.status(500).json({ error: "Internal server error", details: e });
+  }
+})
+
 export default router;
