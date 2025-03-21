@@ -26,6 +26,7 @@ export interface RessourceCreateBody {
   categoryId: number;
   ressourceTypeId: number;
 }
+
 export interface RessourceTypeCreateBody {
   name: string;
 }
