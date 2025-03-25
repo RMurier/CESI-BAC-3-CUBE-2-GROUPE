@@ -2,6 +2,10 @@ import "dotenv/config";
 import express, { json } from "express";
 import prisma from "./utils/database";
 import ressources from "./routes/ressources";
+
+import ressourceTypes from "./routes/ressourceTypes";
+import categories from "./routes/categories";
+import comments from "./routes/comments";
 import users from "./routes/users";
 import roles from "./routes/roles";
 import helmet from "helmet";
@@ -22,6 +26,8 @@ async function main() {
 
   // ROUTES
   app.use("/ressources", ressources);
+  app.use("/ressourceTypes", ressourceTypes);
+  app.use("/categories", categories);
   app.use("/users", users);
   app.use("/roles", roles);
 

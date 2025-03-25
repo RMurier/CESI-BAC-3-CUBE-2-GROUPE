@@ -20,8 +20,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/sign-in" element={<SignIn />} />
+
           {/* <Route path="/sign-up" element={<SignUp />} /> */}
           <Route path="/onboard" element={<Onboard />} />
+
         </Routes>
       </BrowserRouter>
     </ClerkProvider>
