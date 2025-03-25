@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import prisma from "../utils/database";
 
 const router = express.Router();
@@ -24,5 +24,6 @@ router.get("/:clerkId", async (req, res) => {
                 "Internal server error. Please contact an administrateur or IT service."
             );
     }
-
 });
+
+export default router;
