@@ -9,7 +9,8 @@ router.get("/", async (req, res) => {
   try {
     const categories = await prisma.category.findMany();
 
-    if (categories && categories.length > 0) res.status(200).json(categories);
+    if (categories && categories.length > 0)
+      res.status(200).json({ data: categories });
     else res.status(404).json({ message: "No categories found." });
   } catch (e) {
     console.error(e);
@@ -74,7 +75,9 @@ router.delete("/:categoryId", async (req, res) => {
 
     res
       .status(204)
-      .json(`La catégorie (id:${id}) a été supprimée avec succès.`);
+      .json({
+        message: `La catégorie (id:${id}) a été supprimée avec succès.`,
+      });
   } catch (e) {
     console.log(e);
     res.status(500).json({ error: "Internal server error", details: e });

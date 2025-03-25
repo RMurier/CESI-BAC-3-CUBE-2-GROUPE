@@ -4,6 +4,7 @@ import prisma from "./utils/database";
 import ressources from "./routes/ressources";
 import ressourceTypes from "./routes/ressourceTypes";
 import categories from "./routes/categories";
+import comments from "./routes/comments";
 import helmet from "helmet";
 import { clerkMiddleware } from "@clerk/express";
 

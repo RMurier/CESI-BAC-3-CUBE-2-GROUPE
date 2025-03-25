@@ -2,13 +2,16 @@ import express, { Request, Response } from "express";
 import prisma from "../utils/database";
 import { RessourceCreateBody, RessourceEntity } from "../types/ressources";
 import { TypedRequestBody } from "../types/express";
+import commentsRouter from "./comments";
 
 const router = express.Router();
+router.use("/:ressourceId/comments", commentsRouter);
 
 router.get("/", async (req, res) => {
   try {
     const ressources = await prisma.ressource.findMany();
-    if (ressources && ressources.length > 0) res.status(200).json(ressources);
+    if (ressources && ressources.length > 0)
+      res.status(200).json({ data: ressources });
     else res.status(404).json({ message: "No ressources found." });
   } catch (e) {
     console.error(e);
@@ -82,9 +85,9 @@ router.delete(
 
       await prisma.ressource.delete({ where: { id } });
 
-      res
-        .status(204)
-        .json(`La ressource (id:${id}) a été supprimé avec succès.`);
+      res.status(204).json({
+        message: `La ressource (id:${id}) a été supprimé avec succès.`,
+      });
     } catch (e) {
       console.error(e);
       res.status(500).json({ error: "Internal server error", details: e });

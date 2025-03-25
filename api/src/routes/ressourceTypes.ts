@@ -77,9 +77,9 @@ router.delete("/:ressourceTypeId", async (req, res) => {
       data: { isActive: !ressourceType!.isActive },
     });
 
-    res
-      .status(204)
-      .json(`Le type de ressource (id:${id}) a été supprimé avec succès.`);
+    res.status(204).json({
+      message: `Le type de ressource (id:${id}) a été supprimé avec succès.`,
+    });
   } catch (e) {
     console.log(e);
     res.status(500).json({ error: "Internal server error", details: e });

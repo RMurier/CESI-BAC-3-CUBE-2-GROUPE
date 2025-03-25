@@ -5,5 +5,5 @@ export type UserEntity = {
   name?: string | null;
   createdAt: Date;
   updatedAt: Date;
-  Comment?: Comment[];
+  comments?: Comment[];
 };
