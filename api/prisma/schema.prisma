@@ -29,6 +29,7 @@ model User {
   comment     Comment[]
   roleId      Int @default(1)
   role        Role      @relation(fields: [roleId], references: [id])
+  isActivated Boolean @default(true)
 }
 
 model Category {

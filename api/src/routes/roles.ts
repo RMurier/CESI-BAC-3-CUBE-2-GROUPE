@@ -3,6 +3,18 @@ import prisma from "../utils/database";
 
 const router = express.Router();
 
+router.get("/", async (req, res) => {
+    try {
+        const roles = await prisma.role.findMany();
+
+        res.status(200).json(roles);
+    }
+    catch(ex) {
+        console.error(ex);
+        res.status(500).json("Internal server error");
+    }
+})
+
 router.get("/:clerkId", async (req, res) => {
     try {
         const clerkId = req.params.clerkId;
