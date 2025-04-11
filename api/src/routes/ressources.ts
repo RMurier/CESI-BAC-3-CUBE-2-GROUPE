@@ -12,7 +12,6 @@ router.get("/", async (req, res) => {
     const ressources = await prisma.ressource.findMany();
     if (ressources && ressources.length > 0)
       res.status(200).json({ data: ressources });
-
     else res.status(404).json({ message: "No ressources found." });
   } catch (e) {
     res
@@ -22,8 +21,25 @@ router.get("/", async (req, res) => {
       );
   }
 });
+
+router.get("/:ressourceId", async (req, res) => {
+  try {
+    const id = parseInt(req.params.ressourceId);
+
+    const ressource = await prisma.ressource.findFirst({ where: { id } });
+    if (ressource) res.status(200).json({ data: ressource });
+    else res.status(404).json({ message: "Ressource not found." });
+  } catch (e) {
+    res
+      .status(500)
+      .json(
+        "Internal server error. Please contact an administrateur or IT service."
+      );
+  }
+});
+
 router.post<{}, any, RessourceEntity>("/", async (req, res) => {
-  const { title, description, categoryId } = req.body;
+  const { title, description, categoryId, ressourceTypeId } = req.body;
 
   try {
     const category = await prisma.category.findFirst({
@@ -38,6 +54,9 @@ router.post<{}, any, RessourceEntity>("/", async (req, res) => {
       data: {
         title,
         description,
+        ressourceType: {
+          connect: { id: ressourceTypeId },
+        },
         category: {
           connect: { id: categoryId },
         },
