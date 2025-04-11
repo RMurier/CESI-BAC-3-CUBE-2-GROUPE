@@ -1,39 +1,41 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { Redirect, Slot, Stack, useRouter, useSegments } from "expo-router";
+import { useEffect } from "react";
+import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { tokenCache } from "../utils/tokenCache";
+import AuthContextProvider from "../contexts/AuthContext";
+import { NavigationContainer } from "@react-navigation/native";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+const InitialLayout = () => {
+  const { isLoaded, isSignedIn } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    if (!isLoaded) return;
+
+    const inTabsGroup = segments[0] === "(main)";
+
+    console.log("User changed: ", isSignedIn);
+
+    if (isSignedIn && !inTabsGroup) {
+      router.replace("/home");
+    } else if (!isSignedIn) {
+      router.replace("/login");
     }
-  }, [loaded]);
+  }, [isSignedIn]);
 
-  if (!loaded) {
-    return null;
+  return <Slot />;
+};
+
+export default function RootLayout() {
+  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+
+  if (!publishableKey) {
+    throw new Error("Missing Publishable key for Clerk.");
   }
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+      <InitialLayout />
+    </ClerkProvider>
   );
 }
