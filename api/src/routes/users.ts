@@ -66,7 +66,11 @@ router.patch("/desactivate/:id", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const users = await prisma.user.findMany()
+    const users = await prisma.user.findMany({
+      include: {
+        role: true
+      }
+    })
     res.status(200).json(users);
   }
   catch (ex) {
