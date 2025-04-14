@@ -1,7 +1,7 @@
 import { CategoryEntity } from "./category";
 
 export type RessourceEntity = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   createdAt: Date;

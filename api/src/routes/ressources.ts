@@ -11,9 +11,11 @@ router.get("/", async (req, res) => {
     const ressources = await prisma.ressource.findMany({
       include: {
         category: true,
+        ressourceType: true,
       },
     });
-    if (ressources && ressources.length > 0) res.status(200).json(ressources);
+    if (ressources && ressources.length > 0)
+      res.status(200).json({ data: ressources });
     else res.status(404).json({ message: "No ressources found." });
   } catch (e) {
     res
@@ -32,7 +34,7 @@ router.get("/:ressourceId", async (req, res) => {
       where: { id },
       include: {
         category: true,
-        // ressourceType: true,
+        ressourceType: true,
       },
     });
     if (ressource) res.status(200).json({ data: ressource });
