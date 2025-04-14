@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
     const ressourceTypes = await prisma.ressourceType.findMany();
 
     if (ressourceTypes && ressourceTypes.length > 0)
-      res.status(200).json(ressourceTypes);
+      res.status(200).json({ data: ressourceTypes });
     else res.status(404).json({ message: "No ressource types found." });
   } catch (e) {
     console.error(e);
@@ -45,7 +45,6 @@ router.post<{}, any, RessourceTypeEntity>(
   async (req: TypedRequestBody<RessourceTypeCreateBody>, res) => {
     try {
       const { name } = req.body;
-      console.log(name);
 
       const newRessourceType = await prisma.ressourceType.create({
         data: {
