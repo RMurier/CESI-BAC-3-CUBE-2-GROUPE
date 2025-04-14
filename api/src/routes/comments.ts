@@ -31,6 +31,7 @@ router.get("/:commentId", async (req, res) => {
     const id = req.params.commentId;
 
     const comment = await prisma.comment.findFirst({
+      include: { author: true },
       where: { id },
     });
 

@@ -234,11 +234,11 @@ export default function ResourceDetailScreen() {
 
           <View style={styles.metaContainer}>
             <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Catégorie ID:</Text>
+              <Text style={styles.metaLabel}>Catégorie :</Text>
               <Text style={styles.metaValue}>{resource.category.name}</Text>
             </View>
             <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Type de ressource:</Text>
+              <Text style={styles.metaLabel}>Type de ressource :</Text>
               <Text style={styles.metaValue}>
                 {resource.ressourceType.name}
               </Text>
