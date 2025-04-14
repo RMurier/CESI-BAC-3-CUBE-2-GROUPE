@@ -1,3 +1,6 @@
+import { CommentEntity } from "./comment";
+import { RessourceEntity } from "./ressources";
+
 export type UserEntity = {
   id: number;
   clerkUserId: string;
@@ -5,5 +8,6 @@ export type UserEntity = {
   name?: string | null;
   createdAt: Date;
   updatedAt: Date;
-  comments?: Comment[];
+  comments?: CommentEntity[];
+  ressources?: RessourceEntity[];
 };

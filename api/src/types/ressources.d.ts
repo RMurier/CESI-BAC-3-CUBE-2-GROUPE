@@ -1,7 +1,8 @@
 import { CategoryEntity } from "./category";
+import { UserEntity } from "./user";
 
 export type RessourceEntity = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   createdAt: Date;
@@ -11,6 +12,8 @@ export type RessourceEntity = {
   category: CategoryEntity;
   ressourceTypeId: number;
   ressourceType: RessourceTypeEntity;
+  userId: number;
+  user: UserEntity;
 };
 
 export type RessourceTypeEntity = {
@@ -25,6 +28,7 @@ export interface RessourceCreateBody {
   description: string;
   categoryId: number;
   ressourceTypeId: number;
+  userId: number;
 }
 
 export interface RessourceTypeCreateBody {

@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import prisma from "../utils/database";
 import { RessourceEntity } from "../types/ressources";
 import commentsRouter from "./comments";
+import { connect } from "http2";
 
 const router = express.Router();
 router.use("/:ressourceId/comments", commentsRouter);
@@ -11,9 +12,11 @@ router.get("/", async (req, res) => {
     const ressources = await prisma.ressource.findMany({
       include: {
         category: true,
+        ressourceType: true,
       },
     });
-    if (ressources && ressources.length > 0) res.status(200).json(ressources);
+    if (ressources && ressources.length > 0)
+      res.status(200).json({ data: ressources });
     else res.status(404).json({ message: "No ressources found." });
   } catch (e) {
     res
@@ -32,7 +35,7 @@ router.get("/:ressourceId", async (req, res) => {
       where: { id },
       include: {
         category: true,
-        // ressourceType: true,
+        ressourceType: true,
       },
     });
     if (ressource) res.status(200).json({ data: ressource });
@@ -47,7 +50,7 @@ router.get("/:ressourceId", async (req, res) => {
 });
 
 router.post<{}, any, RessourceEntity>("/", async (req, res) => {
-  const { title, description, categoryId, isActive, ressourceTypeId } =
+  const { title, description, categoryId, isActive, ressourceTypeId, userId } =
     req.body;
 
   try {
@@ -63,6 +66,9 @@ router.post<{}, any, RessourceEntity>("/", async (req, res) => {
       data: {
         title,
         description,
+        user: {
+          connect: { id: userId },
+        },
         ressourceType: {
           connect: { id: ressourceTypeId },
         },

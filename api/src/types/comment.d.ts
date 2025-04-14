@@ -2,7 +2,7 @@ import { RessourceEntity } from "./ressources";
 import { UserEntity } from "./user";
 
 export type CommentEntity = {
-  id: number;
+  id: string;
   content: string;
   publishedAt: Date;
   authorId: number | string;
