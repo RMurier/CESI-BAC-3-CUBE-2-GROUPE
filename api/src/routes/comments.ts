@@ -13,10 +13,9 @@ type RessourceParams = {
 router.get("/", async (req, res) => {
   try {
     const { ressourceId } = req.params as RessourceParams;
-    const parsedRessourceId = parseInt(ressourceId);
 
     const comments = await prisma.comment.findMany({
-      where: { ressourceId: parsedRessourceId },
+      where: { ressourceId },
       include: { author: true },
     });
 
@@ -29,8 +28,7 @@ router.get("/", async (req, res) => {
 
 router.get("/:commentId", async (req, res) => {
   try {
-    const commentId = req.params.commentId;
-    const id = parseInt(commentId);
+    const id = req.params.commentId;
 
     const comment = await prisma.comment.findFirst({
       where: { id },
@@ -50,7 +48,6 @@ router.get("/:commentId", async (req, res) => {
 router.post("/", async (req: TypedRequestBody<CommentEntity>, res) => {
   try {
     const { ressourceId } = req.params;
-    const ressourceIdParsed = parseInt(ressourceId);
 
     const { authorId, content } = req.body as {
       authorId: string;
@@ -64,7 +61,7 @@ router.post("/", async (req: TypedRequestBody<CommentEntity>, res) => {
         },
         content,
         ressource: {
-          connect: { id: ressourceIdParsed },
+          connect: { id: ressourceId },
         },
       },
     });
@@ -80,7 +77,7 @@ router.delete("/:commentId", async (req, res) => {
   try {
     const { commentId } = req.params;
 
-    const id = parseInt(commentId);
+    const id = commentId;
 
     await prisma.comment.delete({
       where: { id },
@@ -98,7 +95,7 @@ router.delete("/:commentId", async (req, res) => {
 router.put("/:commentId", async (req: TypedRequestBody<CommentEntity>, res) => {
   try {
     const { commentId } = req.params;
-    const id = parseInt(commentId);
+    const id = commentId;
 
     const comment = await prisma.comment.findFirst({
       where: { id },
