@@ -18,22 +18,35 @@ export const StatsPage = () => {
   const [resourcesByDate, setResourcesByDate] = useState<StatByDate[]>([]);
   const [userCount, setUserCount] = useState<number>(0);
 
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const fetchStats = async () => {
-    const [catRes, dateRes, userRes] = await Promise.all([
-      fetch(`${BASE_URL}/stats/resources-by-category`),
-      fetch(`${BASE_URL}/stats/resources-by-date`),
-      fetch(`${BASE_URL}/stats/user-count`),
+    const params = new URLSearchParams();
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    if (categoryId) params.append("categoryId", categoryId);
+
+    const [catRes, dateRes, userRes, catListRes] = await Promise.all([
+      fetch(`${BASE_URL}/stats/resources-by-category?${params.toString()}`),
+      fetch(`${BASE_URL}/stats/resources-by-date?${params.toString()}`),
+      fetch(`${BASE_URL}/stats/user-count?${params.toString()}`),
+      fetch(`${BASE_URL}/categories`)
     ]);
 
     const catData = await catRes.json();
     const dateData = await dateRes.json();
     const userData = await userRes.json();
+    const catList = await catListRes.json();
 
     setResourcesByCategory(catData);
     setResourcesByDate(dateData);
     setUserCount(userData.count);
+    setCategories(catList);
   };
 
   useEffect(() => {
@@ -55,14 +68,45 @@ export const StatsPage = () => {
     <div className="p-6 space-y-8">
       <h1 className="text-2xl font-bold text-gray-800">Statistiques</h1>
 
-      <div className="flex justify-between items-center">
-        <p className="text-lg">Nombre total d'utilisateurs : <strong>{userCount}</strong></p>
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="border rounded px-3 py-2"
+        />
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="border rounded px-3 py-2"
+        />
+        <select
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
+          className="border rounded px-3 py-2"
+        >
+          <option value="">Toutes les catégories</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
+        <button
+          onClick={fetchStats}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Appliquer les filtres
+        </button>
         <button
           onClick={exportToExcel}
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
         >
           Exporter en Excel
         </button>
+      </div>
+
+      <div className="text-lg">
+        Nombre total d'utilisateurs : <strong>{userCount}</strong>
       </div>
 
       <div className="w-full h-80">

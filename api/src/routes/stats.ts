@@ -5,9 +5,23 @@ const router = express.Router();
 
 router.get("/resources-by-category", async (req, res) => {
   try {
+    const { startDate, endDate, categoryId } = req.query;
+
+    const where: any = {};
+    if (startDate && endDate) {
+      where.createdAt = {
+        gte: new Date(startDate as string),
+        lte: new Date(endDate as string),
+      };
+    }
+    if (categoryId) {
+      where.categoryId = Number(categoryId);
+    }
+
     const result = await prisma.ressource.groupBy({
       by: ["categoryId"],
       _count: true,
+      where,
     });
 
     const categories = await prisma.category.findMany();
@@ -27,15 +41,26 @@ router.get("/resources-by-category", async (req, res) => {
   }
 });
 
-// Nombre de ressources par date (format AAAA-MM)
 router.get("/resources-by-date", async (req, res) => {
   try {
-    const ressources = await prisma.ressource.findMany();
+    const { startDate, endDate, categoryId } = req.query;
+
+    const where: any = {};
+    if (startDate && endDate) {
+      where.createdAt = {
+        gte: new Date(startDate as string),
+        lte: new Date(endDate as string),
+      };
+    }
+    if (categoryId) {
+      where.categoryId = Number(categoryId);
+    }
+
+    const ressources = await prisma.ressource.findMany({ where });
 
     const grouped: { [date: string]: number } = {};
-
     ressources.forEach((r) => {
-      const dateKey = new Date(r.createdAt).toISOString().slice(0, 7); // YYYY-MM
+      const dateKey = new Date(r.createdAt).toISOString().slice(0, 7);
       grouped[dateKey] = (grouped[dateKey] || 0) + 1;
     });
 
@@ -48,10 +73,19 @@ router.get("/resources-by-date", async (req, res) => {
   }
 });
 
-// Nombre total d'utilisateurs
 router.get("/user-count", async (req, res) => {
   try {
-    const count = await prisma.user.count();
+    const { startDate, endDate } = req.query;
+
+    const where: any = {};
+    if (startDate && endDate) {
+      where.createdAt = {
+        gte: new Date(startDate as string),
+        lte: new Date(endDate as string),
+      };
+    }
+
+    const count = await prisma.user.count({ where });
     res.status(200).json({ count });
   } catch (err) {
     console.error(err);
