@@ -39,7 +39,7 @@ export function AppBar() {
             console.log(isAdmin);
             (async () => {
                 await signOut();
-                // navigate("/sign-in");
+                navigate("/sign-in");
             })();
         }
     }, [isAdmin, signOut, navigate]);
@@ -80,6 +80,10 @@ export function AppBar() {
                 </Link>
                 <Link to="/ressources" className="text-gray-700 hover:text-blue-600 font-medium">
                     Ressources
+                </Link>
+
+                <Link to="/stats" className="text-gray-700 hover:text-blue-600 font-medium">
+                    Statistiques
                 </Link>
             </div>
             <div className="flex items-center gap-3">
