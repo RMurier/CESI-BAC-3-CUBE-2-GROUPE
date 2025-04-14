@@ -20,16 +20,17 @@ model Role {
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
-  clerkUserId String    @unique
-  email       String    @unique
+  id          Int         @id @default(autoincrement())
+  clerkUserId String      @unique
+  email       String      @unique
   name        String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt()
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @default(now()) @updatedAt()
   comment     Comment[]
-  roleId      Int @default(1)
-  role        Role      @relation(fields: [roleId], references: [id])
-  isActivated Boolean @default(true)
+  roleId      Int         @default(1)
+  role        Role        @relation(fields: [roleId], references: [id])
+  isActivated Boolean     @default(true)
+  Ressources  Ressource[]
 }
 
 model Category {
@@ -41,7 +42,7 @@ model Category {
 }
 
 model Ressource {
-  id              String           @id @default(uuid())
+  id              String        @id @default(uuid())
   title           String
   description     String
   createdAt       DateTime      @default(now())
@@ -52,6 +53,8 @@ model Ressource {
   ressourceTypeId Int
   ressourceType   RessourceType @relation(fields: [ressourceTypeId], references: [id])
   comments        Comment[]
+  userId          Int
+  user            User          @relation(fields: [userId], references: [id])
 }
 
 model RessourceType {
@@ -62,7 +65,7 @@ model RessourceType {
 }
 
 model Comment {
-  id          String       @id @default(uuid())
+  id          String    @id @default(uuid())
   content     String
   publishedAt DateTime  @default(now())
   authorId    Int
