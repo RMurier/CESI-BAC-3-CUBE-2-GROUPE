@@ -25,7 +25,7 @@ model User {
   email       String    @unique
   name        String?
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime?  @updatedAt()
+  updatedAt   DateTime @default(now()) @updatedAt()
   comment     Comment[]
   roleId      Int @default(1)
   role        Role      @relation(fields: [roleId], references: [id])
@@ -36,29 +36,37 @@ model Category {
   id          Int         @id @default(autoincrement())
   name        String
   description String
+  isActive    Boolean     @default(true)
   ressources  Ressource[]
 }
 
 model Ressource {
-  id          String      @id @default(uuid())
-  title       String
-  description String
-  createdAt   DateTime @default(now())
-  modifiedAt  DateTime @default(now()) @updatedAt
-  isActive    Boolean  @default(true)
-  categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
+  id              String           @id @default(uuid())
+  title           String
+  description     String
+  createdAt       DateTime      @default(now())
+  modifiedAt      DateTime      @default(now()) @updatedAt
+  isActive        Boolean       @default(true)
+  categoryId      Int
+  category        Category      @relation(fields: [categoryId], references: [id])
+  ressourceTypeId Int
+  ressourceType   RessourceType @relation(fields: [ressourceTypeId], references: [id])
+  comments        Comment[]
 }
 
 model RessourceType {
-  id   Int    @id @default(autoincrement())
-  name String
+  id         Int         @id @default(autoincrement())
+  name       String
+  isActive   Boolean     @default(true)
+  ressources Ressource[]
 }
 
 model Comment {
-  id          Int      @id @default(autoincrement())
+  id          String       @id @default(uuid())
   content     String
-  publishedAt DateTime @default(now())
+  publishedAt DateTime  @default(now())
   authorId    Int
-  author      User     @relation(fields: [authorId], references: [id])
+  author      User      @relation(fields: [authorId], references: [id])
+  ressourceId String
+  ressource   Ressource @relation(fields: [ressourceId], references: [id])
 }

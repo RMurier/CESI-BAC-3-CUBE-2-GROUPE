@@ -36,7 +36,6 @@ router.get("/:clerkId", async (req, res) => {
                 "Internal server error. Please contact an administrateur or IT service."
             );
     }
-
 });
 
 export default router;

@@ -1,6 +1,8 @@
 import express from "express";
 import prisma from "../utils/database";
 import { Category } from "@prisma/client";
+import { TypedRequestBody } from "../types/express";
+import { CategoryEntity } from "../types/category";
 
 const router = express.Router();
 
@@ -54,32 +56,74 @@ router.patch("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
     const id = parseInt(req.params.id);
-  
-    if (isNaN(id)) {
-      res.status(400).json({ error: "ID invalide." });
-      return;
-    }
-  
-    try {
-      const related = await prisma.ressource.findFirst({
-        where: { categoryId: id },
-      });
-  
-      if (related) {
-        res.status(400).json({
-          error: "Cette catégorie est liée à une ou plusieurs ressources.",
-        });
-        return;
-      }
-  
-      await prisma.category.delete({ where: { id } });
-  
-      res.status(200).json({ message: "Catégorie supprimée avec succès." });
-    } catch (error) {
-      console.error("Erreur lors de la suppression :", error);
-      res.status(500).json({ error: "Erreur interne du serveur." });
-    }
-  });
 
+    if (isNaN(id)) {
+        res.status(400).json({ error: "ID invalide." });
+        return;
+    }
+
+    try {
+        const related = await prisma.ressource.findFirst({
+            where: { categoryId: id },
+        });
+
+        if (related) {
+            res.status(400).json({
+                error: "Cette catégorie est liée à une ou plusieurs ressources.",
+            });
+            return;
+        }
+
+        await prisma.category.delete({ where: { id } });
+
+        res.status(200).json({ message: "Catégorie supprimée avec succès." });
+    } catch (error) {
+        console.error("Erreur lors de la suppression :", error);
+        res.status(500).json({ error: "Erreur interne du serveur." });
+    }
+});
+
+router.put(
+    "/:ressourceTypeId",
+    async (req: TypedRequestBody<CategoryEntity>, res) => {
+        try {
+            const id = parseInt(req.params.ressourceTypeId);
+
+            const { name, description } = req.body;
+
+            const updatedCategory = await prisma.category.update({
+                where: { id },
+                data: { name, description },
+            });
+
+            res.status(200).json({
+                message: `La catégorie ${id} a bien été mise-à-jour.`,
+                data: updatedCategory,
+            });
+        } catch (e) {
+            console.log(e);
+            res.status(500).json({ error: "Internal server error", details: e });
+        }
+    }
+);
+
+router.get("/:categoryId", async (req, res) => {
+    try {
+        const id = parseInt(req.params.categoryId);
+
+        const category = await prisma.category.findFirst({
+            where: { id },
+        });
+
+        if (!category) {
+            res.status(404).json({ error: "Category not found" });
+        } else {
+            res.status(200).json({ data: category });
+        }
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: "Internal server error", details: e });
+    }
+});
 
 export default router;

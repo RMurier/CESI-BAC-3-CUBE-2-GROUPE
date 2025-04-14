@@ -1,9 +1,10 @@
 import express, { Request, Response } from "express";
 import prisma from "../utils/database";
-import { RessourceCreateBody, RessourceEntity } from "../types/ressources";
-import { TypedRequestBody } from "../types/express";
+import { RessourceEntity } from "../types/ressources";
+import commentsRouter from "./comments";
 
 const router = express.Router();
+router.use("/:ressourceId/comments", commentsRouter);
 
 router.get("/", async (req, res) => {
   try {
@@ -22,6 +23,29 @@ router.get("/", async (req, res) => {
       );
   }
 });
+
+router.get("/:ressourceId", async (req, res) => {
+  try {
+    const id = req.params.ressourceId;
+
+    const ressource = await prisma.ressource.findFirst({
+      where: { id },
+      include: {
+        category: true,
+        // ressourceType: true,
+      },
+    });
+    if (ressource) res.status(200).json({ data: ressource });
+    else res.status(404).json({ message: "Ressource not found." });
+  } catch (e) {
+    res
+      .status(500)
+      .json(
+        "Internal server error. Please contact an administrateur or IT service."
+      );
+  }
+});
+
 router.post<{}, any, RessourceEntity>("/", async (req, res) => {
   const { title, description, categoryId, isActive } = req.body;
 
@@ -34,11 +58,13 @@ router.post<{}, any, RessourceEntity>("/", async (req, res) => {
       res.status(400).json({ error: "Category not found" });
       return;
     }
-
     const newRessource = await prisma.ressource.create({
       data: {
         title,
         description,
+        // ressourceType: {
+        //   connect: { id: ressourceTypeId },
+        // },
         category: {
           connect: { id: categoryId },
         },
