@@ -15,6 +15,7 @@ export default function HomeLayout() {
         name="home"
         options={{
           title: "Accueil",
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
@@ -24,21 +25,22 @@ export default function HomeLayout() {
         name="ressource"
         options={{
           title: "Ressources",
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="document-outline" size={size} color={color} />
           ),
         }}
       />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="profile"
         options={{
-          title: "Profil",
+          title: "Profil",*
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
         }}
       />
-      <Tabs.Screen name="[id]" options={{ href: null }} />
+      <Tabs.Screen name="[id]" options={{ href: null }} /> */}
     </Tabs>
   );
 }

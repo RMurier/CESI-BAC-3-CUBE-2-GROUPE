@@ -7,6 +7,7 @@ import { Stack } from "expo-router";
 const Register = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
 
+  const [name, setName] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [pendingVerification, setPendingVerification] = useState(false);
@@ -23,6 +24,7 @@ const Register = () => {
     try {
       // Create the user on Clerk
       await signUp.create({
+        username: name,
         emailAddress,
         password,
       });
@@ -41,6 +43,8 @@ const Register = () => {
 
   // Verify the email address
   const onPressVerify = async () => {
+    const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+
     if (!isLoaded) {
       return;
     }
@@ -50,8 +54,22 @@ const Register = () => {
       const completeSignUp = await signUp.attemptEmailAddressVerification({
         code,
       });
-
+      completeSignUp.emailAddress;
+      completeSignUp.username;
       await setActive({ session: completeSignUp.createdSessionId });
+      console.log("completeSignUp.createdUserId", completeSignUp.createdUserId);
+      const response = await fetch(`${apiUrl}/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clerkUserId: completeSignUp.createdUserId,
+          name: completeSignUp.username,
+          email: completeSignUp.emailAddress,
+          roleId: 1,
+        }),
+      });
     } catch (err: any) {
       alert(err.errors[0].message);
     } finally {
@@ -68,7 +86,14 @@ const Register = () => {
         <>
           <TextInput
             autoCapitalize="none"
-            placeholder="simon@galaxies.dev"
+            placeholder="Votre nom"
+            value={name}
+            onChangeText={setName}
+            style={styles.inputField}
+          />
+          <TextInput
+            autoCapitalize="none"
+            placeholder="exemple@mail.dev"
             value={emailAddress}
             onChangeText={setEmailAddress}
             style={styles.inputField}
@@ -83,7 +108,7 @@ const Register = () => {
 
           <Button
             onPress={onSignUpPress}
-            title="Sign up"
+            title="Je m'inscris"
             color={"#6c47ff"}
           ></Button>
         </>
@@ -93,6 +118,7 @@ const Register = () => {
         <>
           <View>
             <TextInput
+              keyboardType="numeric"
               value={code}
               placeholder="Code..."
               style={styles.inputField}
