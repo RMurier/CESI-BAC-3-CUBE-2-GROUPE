@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Role } from "../interfaces/role";
 import { User } from "../interfaces/user";
+import { useRoleStore } from "../stores/roleStore";
+import { useFetcher } from "react-router-dom";
 
 export const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -12,7 +14,10 @@ export const UsersPage = () => {
 
   const [nameFilter, setNameFilter] = useState("");
   const [emailFilter, setEmailFilter] = useState("");
-  const [roleFilter, setRoleFilter] = useState<number | "">("");
+  const [roleFilter, setRoleFilter] = useState<number | string>("");
+
+  const { isSuperAdmin } = useRoleStore();
+
 
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -141,26 +146,29 @@ export const UsersPage = () => {
               <td className="p-3">{user.email}</td>
               <td className="p-3">{user.role?.name}</td>
               <td>
-              <label className="relative inline-flex items-center cursor-pointer mb-3">
-              <input
-                type="checkbox"
-                checked={user.isActivated}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
-            </label>
+                <label className="relative inline-flex items-center cursor-pointer mb-3">
+                  <input
+                    type="checkbox"
+                    checked={user.isActivated}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
+                  <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
+                </label>
               </td>
               <td className="p-3 text-center space-x-4">
-                <button
-                  onClick={() => {
-                    setSelectedUser(user);
-                    setEditModalOpen(true);
-                  }}
-                  className="text-blue-600 hover:underline text-sm"
-                >
-                  Modifier
-                </button>
+                {isSuperAdmin && (
+
+                  <button
+                    onClick={() => {
+                      setSelectedUser(user);
+                      setEditModalOpen(true);
+                    }}
+                    className="text-blue-600 hover:underline text-sm"
+                  >
+                    Modifier
+                  </button>
+                )}
                 <button
                   onClick={() => deleteUser(user.id)}
                   className="text-red-600 hover:underline text-sm"
@@ -198,18 +206,18 @@ export const UsersPage = () => {
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Statut</label>
               <label className="relative inline-flex items-center cursor-pointer mb-3">
-              <input
-                type="checkbox"
-                checked={selectedUser.isActivated}
-                onChange={(e) =>
-                  setSelectedUser((prev) => ({ ...prev!, isActivated: e.target.checked }))
-                }
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
-              <p className="ml-2">{selectedUser.isActivated ? "Actif" : "Inactif"}</p>
-            </label>
+                <input
+                  type="checkbox"
+                  checked={selectedUser.isActivated}
+                  onChange={(e) =>
+                    setSelectedUser((prev) => ({ ...prev!, isActivated: e.target.checked }))
+                  }
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
+                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
+                <p className="ml-2">{selectedUser.isActivated ? "Actif" : "Inactif"}</p>
+              </label>
             </div>
 
             <div className="flex justify-end gap-2">

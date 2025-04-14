@@ -1,6 +1,7 @@
 import { useUser, SignOutButton, useClerk } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useRoleStore } from "../stores/roleStore";
 
 export function AppBar() {
     const { user, isLoaded } = useUser();
@@ -8,6 +9,11 @@ export function AppBar() {
     const navigate = useNavigate();
 
     const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+    const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
+
+
+    const { setRoles } = useRoleStore();
+
 
     const checkRole = async () => {
         if (!user) return;
@@ -16,6 +22,12 @@ export function AppBar() {
             if (res.ok) {
                 const data = await res.json();
                 setIsAdmin(data.roleId === 3 || data.roleId === 4);
+                if (data.roleId === 4) {
+                    setIsSuperAdmin(true);
+                }
+                else {
+                    setIsSuperAdmin(false);
+                }
             } else {
                 setIsAdmin(false);
             }
@@ -36,12 +48,12 @@ export function AppBar() {
 
     useEffect(() => {
         if (isAdmin === false) {
-            console.log(isAdmin);
             (async () => {
                 await signOut();
                 navigate("/sign-in");
             })();
         }
+        setRoles(isAdmin, isSuperAdmin);
     }, [isAdmin, signOut, navigate]);
 
     if (!isLoaded || (user && isAdmin === null)) {
@@ -72,9 +84,11 @@ export function AppBar() {
                 <h1 className="text-xl font-semibold text-gray-800" onClick={() => { navigate("/") }}>
                     <div className="cursor-pointer">CUBE 2 GROUPE</div>
                 </h1>
-                <Link to="/users" className="text-gray-700 hover:text-blue-600 font-medium">
-                    Utilisateurs
-                </Link>
+                {isSuperAdmin && (
+                    <Link to="/users" className="text-gray-700 hover:text-blue-600 font-medium">
+                        Utilisateurs
+                    </Link>
+                )}
                 <Link to="/categories" className="text-gray-700 hover:text-blue-600 font-medium">
                     Catégories
                 </Link>
