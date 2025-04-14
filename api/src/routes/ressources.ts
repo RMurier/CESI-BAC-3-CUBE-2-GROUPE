@@ -8,11 +8,11 @@ router.use("/:ressourceId/comments", commentsRouter);
 
 router.get("/", async (req, res) => {
   try {
-    const ressources = (await prisma.ressource.findMany({
+    const ressources = await prisma.ressource.findMany({
       include: {
-        category: true
-      }
-    }));
+        category: true,
+      },
+    });
     if (ressources && ressources.length > 0) res.status(200).json(ressources);
     else res.status(404).json({ message: "No ressources found." });
   } catch (e) {
@@ -47,7 +47,8 @@ router.get("/:ressourceId", async (req, res) => {
 });
 
 router.post<{}, any, RessourceEntity>("/", async (req, res) => {
-  const { title, description, categoryId, isActive } = req.body;
+  const { title, description, categoryId, isActive, ressourceTypeId } =
+    req.body;
 
   try {
     const category = await prisma.category.findFirst({
@@ -62,13 +63,13 @@ router.post<{}, any, RessourceEntity>("/", async (req, res) => {
       data: {
         title,
         description,
-        // ressourceType: {
-        //   connect: { id: ressourceTypeId },
-        // },
+        ressourceType: {
+          connect: { id: ressourceTypeId },
+        },
         category: {
           connect: { id: categoryId },
         },
-        isActive
+        isActive,
       },
     });
 
@@ -84,16 +85,14 @@ router.delete("/:id", async (req, res) => {
   try {
     await prisma.ressource.delete({
       where: {
-        id: id
-      }
-    })
+        id: id,
+      },
+    });
 
     res.status(200).json("Ressource supprimée avec succès.");
-  }
-  catch (e) {
+  } catch (e) {
     console.log(e);
-    res.status(500)
-      .json("Internal server error");
+    res.status(500).json("Internal server error");
   }
 });
 
