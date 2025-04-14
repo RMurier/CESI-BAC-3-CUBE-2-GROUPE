@@ -4,10 +4,14 @@ import { Category } from "../interfaces/category";
 
 export const RessourcesPage = () => {
   const [ressources, setRessources] = useState<Ressource[]>([]);
+  const [filteredRessources, setFilteredRessources] = useState<Ressource[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [titleFilter, setTitleFilter] = useState("");
+  const [descFilter, setDescFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<number | "">("");
 
   const [newRessource, setNewRessource] = useState({
     title: "",
@@ -80,6 +84,28 @@ export const RessourcesPage = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    let filtered = [...ressources];
+
+    if (titleFilter.trim()) {
+      filtered = filtered.filter((r) =>
+        r.title.toLowerCase().includes(titleFilter.toLowerCase())
+      );
+    }
+
+    if (descFilter.trim()) {
+      filtered = filtered.filter((r) =>
+        r.description.toLowerCase().includes(descFilter.toLowerCase())
+      );
+    }
+
+    if (categoryFilter !== "") {
+      filtered = filtered.filter((r) => r.categoryId === Number(categoryFilter));
+    }
+
+    setFilteredRessources(filtered);
+  }, [ressources, titleFilter, descFilter, categoryFilter]);
+
   if (loading) {
     return <p className="text-center text-gray-500">Chargement...</p>;
   }
@@ -96,6 +122,33 @@ export const RessourcesPage = () => {
         </button>
       </div>
 
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Filtrer par titre"
+          value={titleFilter}
+          onChange={(e) => setTitleFilter(e.target.value)}
+          className="border rounded px-3 py-2"
+        />
+        <input
+          type="text"
+          placeholder="Filtrer par description"
+          value={descFilter}
+          onChange={(e) => setDescFilter(e.target.value)}
+          className="border rounded px-3 py-2"
+        />
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value ? Number(e.target.value) : "")}
+          className="border rounded px-3 py-2"
+        >
+          <option value="">Toutes les catégories</option>
+          {categories.map((cat) => (
+            <option key={cat.id!} value={cat.id!}>{cat.name}</option>
+          ))}
+        </select>
+      </div>
+
       <table className="w-full border border-gray-200 rounded-lg overflow-hidden">
         <thead className="bg-gray-100 text-left text-sm text-gray-600">
           <tr>
@@ -108,7 +161,7 @@ export const RessourcesPage = () => {
           </tr>
         </thead>
         <tbody>
-          {ressources.length > 0 && ressources.map((r) => (
+          {filteredRessources.map((r) => (
             <tr key={r.id} className="border-t text-sm">
               <td className="p-3">{r.title}</td>
               <td className="p-3">{r.description}</td>
@@ -124,7 +177,6 @@ export const RessourcesPage = () => {
                   />
                   <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
                   <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
-                  <p className="ml-2">{r.isActive ? "Actif" : "Inactif"}</p>
                 </label>
               </td>
               <td className="flex gap-4 p-3">
@@ -149,7 +201,6 @@ export const RessourcesPage = () => {
         </tbody>
       </table>
 
-      {/* Modal de création */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
@@ -185,7 +236,7 @@ export const RessourcesPage = () => {
               />
               <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
-              <p className="ml-2">Est actif</p>
+              <p className="ml-2">{newRessource.isActive ? "Actif" : "Inactif"}</p>
             </label>
 
             <select
@@ -228,7 +279,6 @@ export const RessourcesPage = () => {
         </div>
       )}
 
-      {/* Modal d'édition */}
       {showEditModal && editRessource && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
@@ -264,7 +314,7 @@ export const RessourcesPage = () => {
               />
               <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
-              <p className="ml-2">Actif</p>
+              <p className="ml-2">{editRessource.isActive ? "Actif" : "Inactif"}</p>
             </label>
 
             <select
