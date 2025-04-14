@@ -17,6 +17,7 @@ router.get("/", async (req, res) => {
 
     const comments = await prisma.comment.findMany({
       where: { ressourceId: parsedRessourceId },
+      include: { author: true },
     });
 
     res.status(200).json({ data: comments });
@@ -51,12 +52,15 @@ router.post("/", async (req: TypedRequestBody<CommentEntity>, res) => {
     const { ressourceId } = req.params;
     const ressourceIdParsed = parseInt(ressourceId);
 
-    const { authorId, content } = req.body;
-
+    const { authorId, content } = req.body as {
+      authorId: string;
+      content: string;
+    };
+    console.log("AUTHOR ID", authorId);
     const newComment = await prisma.comment.create({
       data: {
         author: {
-          connect: { id: authorId },
+          connect: { clerkUserId: authorId },
         },
         content,
         ressource: {
