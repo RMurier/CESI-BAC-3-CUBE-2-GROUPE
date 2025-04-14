@@ -5,6 +5,7 @@ import ressources from "./routes/ressources";
 
 import ressourceTypes from "./routes/ressourceTypes";
 import comments from "./routes/comments";
+import stats from "./routes/stats"
 import users from "./routes/users";
 import roles from "./routes/roles";
 import categories from "./routes/categories";
@@ -31,6 +32,8 @@ async function main() {
   app.use("/users", users);
   app.use("/roles", roles);
   app.use("/categories", categories);
+  app.use("/stats", stats);
+  app.use("/comments", comments);
 
   app.listen(port, () => {
     console.log(`App running and listening on http://localhost:${port}`);

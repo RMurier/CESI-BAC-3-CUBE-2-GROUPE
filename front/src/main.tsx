@@ -10,6 +10,7 @@ import { Onboard } from "./pages/onboard";
 import { UsersPage } from "./pages/users";
 import { CategoriesPage } from "./pages/categories";
 import { RessourcesPage } from "./pages/ressource";
+import { StatsPage } from "./pages/stats";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/users" element={<UsersPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/ressources" element={<RessourcesPage />} />
+          <Route path="/stats" element={<StatsPage />} />
         </Routes>
       </BrowserRouter>
     </ClerkProvider>
