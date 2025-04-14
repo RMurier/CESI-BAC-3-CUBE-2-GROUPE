@@ -6,7 +6,6 @@ import { Home } from "./pages/home";
 import { SignIn } from "./pages/signin";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { AppBar } from "./components/AppBar";
-// import { SignUp } from "./pages/signup";
 import { Onboard } from "./pages/onboard";
 import { UsersPage } from "./pages/users";
 import { CategoriesPage } from "./pages/categories";

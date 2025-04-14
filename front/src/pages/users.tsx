@@ -3,138 +3,160 @@ import { Role } from "../interfaces/role";
 import { User } from "../interfaces/user";
 
 export const UsersPage = () => {
-    const [users, setUsers] = useState<User[]>([]);
-    const [roles, setRoles] = useState<Role[]>([]);
-    const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
-    const fetchUsers = async () => {
-        setLoading(true);
-        const res = await fetch(`${import.meta.env.VITE_BASE_URL}/users`);
-        const data = await res.json();
-        setUsers(data);
-        setLoading(false);
-    };
+  const fetchUsers = async () => {
+    setLoading(true);
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/users`);
+    const data = await res.json();
+    setUsers(data);
+    setLoading(false);
+  };
 
-    const fetchRoles = async () => {
-        const res = await fetch(`${import.meta.env.VITE_BASE_URL}/roles`);
-        const data = await res.json();
-        setRoles(data);
-    };
+  const fetchRoles = async () => {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/roles`);
+    const data = await res.json();
+    setRoles(data);
+  };
 
+  const handleEditUser = async () => {
+    if (!selectedUser) return;
 
-    const updateUserRole = async (userId: number, newRoleId: number) => {
-        const res = await fetch(`${import.meta.env.VITE_BASE_URL}/users/role/${userId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ roleId: newRoleId }),
-        });
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/users/role/${selectedUser.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roleId: selectedUser.roleId }),
+    });
 
-        if (!res.ok) {
-            console.error("Échec de mise à jour");
-            return;
-        }
+    const statusRes = await fetch(`${import.meta.env.VITE_BASE_URL}/users/desactivate/${selectedUser.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActivated: selectedUser.isActivated }),
+    });
 
-        setUsers((prevUsers) =>
-            prevUsers.map((u) => {
-                if (u.id !== userId) return u;
-
-                const updatedUser: User = {
-                    ...u,
-                    roleId: newRoleId,
-                    role: roles.find((r) => r.id === newRoleId)!,
-                };
-
-                return updatedUser;
-            })
-        );
-    };
-
-    const deleteUser = async (userId: number) => {
-        await fetch(`${import.meta.env.VITE_BASE_URL}/users/${userId}`, {
-            method: "DELETE",
-        });
-        fetchUsers();
-    };
-
-    const activateUser = async (userId: number, isActivated: boolean) => {
-        const res = await fetch(`${import.meta.env.VITE_BASE_URL}/users/desactivate/${userId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ isActivated }),
-        });
-
-        if (!res.ok) {
-            console.error("Erreur lors de la désactivation de l'utilisateur.");
-            return;
-        }
-
-        setUsers((prev) =>
-            prev.map((u) =>
-                u.id === userId ? { ...u, isActivated } : u
-            )
-        );
-    };
-
-
-    useEffect(() => {
-        fetchRoles();
-        fetchUsers();
-    }, []);
-
-    if (loading) {
-        return <p className="text-center text-gray-500">Chargement des utilisateurs...</p>;
+    if (res.ok && statusRes.ok) {
+      setEditModalOpen(false);
+      fetchUsers();
+    } else {
+      console.error("Erreur lors de la mise à jour");
     }
+  };
 
-    return (
-        <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4 text-gray-800">Utilisateurs</h1>
-            <table className="w-full border border-gray-200 rounded-lg overflow-hidden">
-                <thead className="bg-gray-100 text-left text-sm text-gray-600">
-                    <tr>
-                        <th className="p-3">Id</th>
-                        <th className="p-3">Nom</th>
-                        <th className="p-3">Email</th>
-                        <th className="p-3">Rôle</th>
-                        <th className="p-3 text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.map((user) => (
-                        <tr key={user.id} className="border-t text-sm">
-                            <td className="p-3">{user.id ?? "—"}</td>
-                            <td className="p-3">{user.name ?? "—"}</td>
-                            <td className="p-3">{user.email}</td>
-                            <td className="p-3">
-                                <select
-                                    value={user.roleId}
-                                    onChange={(e) => updateUserRole(user.id, Number(e.target.value))}
-                                    className="border rounded px-2 py-1 text-sm"
-                                >
-                                    {roles.map((role) => (
-                                        <option key={role.id} value={role.id}>
-                                            {role.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </td>
-                            <td className="p-3 text-center space-x-4">
-                                <button
-                                    onClick={() => activateUser(user.id, !user.isActivated)}
-                                    className="text-blue-600 hover:underline text-sm"
-                                >
-                                    {user.isActivated ? "Désactiver" : "Activer"}
-                                </button>
-                                <button
-                                    onClick={() => deleteUser(user.id)}
-                                    className="text-red-600 hover:underline text-sm"
-                                >
-                                    Supprimer
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+  const deleteUser = async (userId: number) => {
+    await fetch(`${import.meta.env.VITE_BASE_URL}/users/${userId}`, {
+      method: "DELETE",
+    });
+    fetchUsers();
+  };
+
+  useEffect(() => {
+    fetchRoles();
+    fetchUsers();
+  }, []);
+
+  if (loading) {
+    return <p className="text-center text-gray-500">Chargement des utilisateurs...</p>;
+  }
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4 text-gray-800">Utilisateurs</h1>
+      <table className="w-full border border-gray-200 rounded-lg overflow-hidden">
+        <thead className="bg-gray-100 text-left text-sm text-gray-600">
+          <tr>
+            <th className="p-3">Id</th>
+            <th className="p-3">Nom</th>
+            <th className="p-3">Email</th>
+            <th className="p-3">Rôle</th>
+            <th className="p-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user) => (
+            <tr key={user.id} className="border-t text-sm">
+              <td className="p-3">{user.id ?? "—"}</td>
+              <td className="p-3">{user.name ?? "—"}</td>
+              <td className="p-3">{user.email}</td>
+              <td className="p-3">{user.role?.name}</td>
+              <td className="p-3 text-center space-x-4">
+                <button
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setEditModalOpen(true);
+                  }}
+                  className="text-blue-600 hover:underline text-sm"
+                >
+                  Modifier
+                </button>
+                <button
+                  onClick={() => deleteUser(user.id)}
+                  className="text-red-600 hover:underline text-sm"
+                >
+                  Supprimer
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {editModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <h2 className="text-xl font-bold mb-4">Modifier l'utilisateur</h2>
+
+            <div className="mb-3">
+              <label className="block text-sm font-medium mb-1">Rôle</label>
+              <select
+                value={selectedUser.roleId}
+                onChange={(e) =>
+                  setSelectedUser((prev) => ({ ...prev!, roleId: Number(e.target.value) }))
+                }
+                className="w-full border rounded px-3 py-2"
+              >
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Statut</label>
+              <select
+                value={selectedUser.isActivated ? "1" : "0"}
+                onChange={(e) =>
+                  setSelectedUser((prev) => ({ ...prev!, isActivated: e.target.value === "1" }))
+                }
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="1">Activé</option>
+                <option value="0">Désactivé</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 text-sm"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleEditUser}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+              >
+                Enregistrer
+              </button>
+            </div>
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 };
