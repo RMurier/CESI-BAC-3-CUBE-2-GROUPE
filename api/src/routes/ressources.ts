@@ -7,7 +7,11 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const ressources = await prisma.ressource.findMany();
+    const ressources = (await prisma.ressource.findMany({
+      include: {
+        category: true
+      }
+    }));
     if (ressources && ressources.length > 0) res.status(200).json(ressources);
     else res.status(404).json({ message: "No ressources found." });
   } catch (e) {
@@ -19,7 +23,7 @@ router.get("/", async (req, res) => {
   }
 });
 router.post<{}, any, RessourceEntity>("/", async (req, res) => {
-  const { title, description, categoryId } = req.body;
+  const { title, description, categoryId, isActive } = req.body;
 
   try {
     const category = await prisma.category.findFirst({
@@ -38,6 +42,7 @@ router.post<{}, any, RessourceEntity>("/", async (req, res) => {
         category: {
           connect: { id: categoryId },
         },
+        isActive
       },
     });
 
@@ -48,98 +53,47 @@ router.post<{}, any, RessourceEntity>("/", async (req, res) => {
   }
 });
 
-router.post<{}, any, RessourceEntity>(
-  "/",
-  async (req: TypedRequestBody<RessourceCreateBody>, res) => {
-    const { title, description, categoryId } = req.body;
-
-    try {
-      const category = await prisma.category.findFirst({
-        where: { id: categoryId },
-      });
-
-      if (!category) {
-        res.status(400).json({ error: "Category not found" });
+router.delete("/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    await prisma.ressource.delete({
+      where: {
+        id: id
       }
+    })
 
-      const newRessource = await prisma.ressource.create({
-        data: {
-          title,
-          description,
-          category: {
-            connect: { id: categoryId },
-          },
-        },
-      });
-
-      res.status(201).json({ data: newRessource });
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: "Internal server error", details: e });
-    }
+    res.status(200).json("Ressource supprimée avec succès.");
   }
-);
-
-router.delete(
-  "/:ressourceId",
-  async (req: TypedRequestBody<RessourceEntity>, res) => {
-    try {
-      const id = parseInt(req.params.ressourceId);
-
-      await prisma.ressource.delete({ where: { id } });
-
-      res
-        .status(204)
-        .json(`La ressource (id:${id}) a été supprimé avec succès.`);
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: "Internal server error", details: e });
-    }
+  catch (e) {
+    console.log(e);
+    res.status(500)
+      .json("Internal server error");
   }
-);
+});
 
-router.put(
-  "/:ressourceId",
-  async (req: TypedRequestBody<RessourceEntity>, res) => {
-    try {
-      const id = parseInt(req.params.ressourceId);
+router.patch("/:id", async (req, res) => {
+  const id = req.params.id;
+  const { title, description, isActive, categoryId } = req.body;
 
-      const { title, description, isActive, categoryId } = req.body;
+  try {
+    const updated = await prisma.ressource.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        isActive,
+        categoryId,
+      },
+      include: {
+        category: true,
+      },
+    });
 
-      const category = await prisma.category.findFirst({
-        where: { id: categoryId },
-      });
-
-      if (!category) {
-        res.status(400).json({ error: "Category not found" });
-      }
-
-      const updatedRessource = await prisma.ressource.update({
-        where: {
-          id,
-        },
-        data: {
-          title,
-          description,
-          isActive,
-          category: {
-            connect: {
-              id: categoryId,
-            },
-          },
-        },
-      });
-
-      res
-        .status(200)
-        .json({
-          message: `L'utilisateur ${req.params.userId} a bien été mis-à-jour.`,
-          data: updatedRessource,
-        });
-    } catch (e) {
-      res.status(500).json({ error: "Internal server error", details: e });
-    }
+    res.status(200).json(updated);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Erreur lors de la modification" });
   }
-);
+});
 
 export default router;

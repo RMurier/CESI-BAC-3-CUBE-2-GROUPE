@@ -4,6 +4,7 @@ import prisma from "./utils/database";
 import ressources from "./routes/ressources";
 import users from "./routes/users";
 import roles from "./routes/roles";
+import categories from "./routes/categories";
 import helmet from "helmet";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
@@ -24,6 +25,7 @@ async function main() {
   app.use("/ressources", ressources);
   app.use("/users", users);
   app.use("/roles", roles);
+  app.use("/categories", categories);
 
   app.listen(port, () => {
     console.log(`App running and listening on http://localhost:${port}`);

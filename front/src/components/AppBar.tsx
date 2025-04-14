@@ -36,9 +36,10 @@ export function AppBar() {
 
     useEffect(() => {
         if (isAdmin === false) {
+            console.log(isAdmin);
             (async () => {
                 await signOut();
-                navigate("/sign-in");
+                // navigate("/sign-in");
             })();
         }
     }, [isAdmin, signOut, navigate]);
@@ -75,7 +76,7 @@ export function AppBar() {
                     Utilisateurs
                 </Link>
                 <Link to="/categories" className="text-gray-700 hover:text-blue-600 font-medium">
-                    Cagégories
+                    Catégories
                 </Link>
                 <Link to="/ressources" className="text-gray-700 hover:text-blue-600 font-medium">
                     Ressources
