@@ -29,6 +29,7 @@ model User {
   comment     Comment[]
   roleId      Int @default(1)
   role        Role      @relation(fields: [roleId], references: [id])
+  isActivated Boolean @default(true)
 }
 
 model Category {
@@ -40,7 +41,7 @@ model Category {
 }
 
 model Ressource {
-  id              Int           @id @default(autoincrement())
+  id              String           @id @default(uuid())
   title           String
   description     String
   createdAt       DateTime      @default(now())
@@ -61,11 +62,11 @@ model RessourceType {
 }
 
 model Comment {
-  id          Int       @id @default(autoincrement())
+  id          String       @id @default(uuid())
   content     String
   publishedAt DateTime  @default(now())
   authorId    Int
   author      User      @relation(fields: [authorId], references: [id])
-  ressourceId Int
+  ressourceId String
   ressource   Ressource @relation(fields: [ressourceId], references: [id])
 }

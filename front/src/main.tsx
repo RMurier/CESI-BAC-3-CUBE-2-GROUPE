@@ -8,6 +8,9 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { AppBar } from "./components/AppBar";
 // import { SignUp } from "./pages/signup";
 import { Onboard } from "./pages/onboard";
+import { UsersPage } from "./pages/users";
+import { CategoriesPage } from "./pages/categories";
+import { RessourcesPage } from "./pages/ressource";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -20,10 +23,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/sign-in" element={<SignIn />} />
-
           {/* <Route path="/sign-up" element={<SignUp />} /> */}
           <Route path="/onboard" element={<Onboard />} />
-
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/ressources" element={<RessourcesPage />} />
         </Routes>
       </BrowserRouter>
     </ClerkProvider>
