@@ -26,7 +26,13 @@ router.get("/:ressourceId", async (req, res) => {
   try {
     const id = parseInt(req.params.ressourceId);
 
-    const ressource = await prisma.ressource.findFirst({ where: { id } });
+    const ressource = await prisma.ressource.findFirst({
+      where: { id },
+      include: {
+        category: true,
+        ressourceType: true,
+      },
+    });
     if (ressource) res.status(200).json({ data: ressource });
     else res.status(404).json({ message: "Ressource not found." });
   } catch (e) {

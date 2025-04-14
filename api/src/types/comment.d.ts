@@ -5,7 +5,7 @@ export type CommentEntity = {
   id: number;
   content: string;
   publishedAt: Date;
-  authorId: number;
+  authorId: number | string;
   author?: UserEntity;
   ressourceId: number;
   ressource?: RessourceEntity;
