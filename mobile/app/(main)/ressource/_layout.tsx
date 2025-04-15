@@ -69,6 +69,22 @@ export default function ResourcesLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="add"
+        options={{
+          title: "Créer une ressource",
+          headerShown: false,
+          headerBackTitle: "Ressources",
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ marginLeft: 10 }}
+            >
+              <Ionicons name="arrow-back" size={24} color="#0066cc" />
+            </TouchableOpacity>
+          ),
+        }}
+      />
     </Stack>
   );
 }
