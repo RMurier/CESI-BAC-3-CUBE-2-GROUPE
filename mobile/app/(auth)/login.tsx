@@ -5,10 +5,9 @@ import {
   View,
   StyleSheet,
   TextInput,
-  Button,
-  Pressable,
+  TouchableOpacity,
   Text,
-  Alert,
+  SafeAreaView,
 } from "react-native";
 import Spinner from "react-native-loading-spinner-overlay";
 
@@ -40,58 +39,98 @@ const Login = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Spinner visible={loading} />
 
-      <TextInput
-        autoCapitalize="none"
-        placeholder="exemple@mail.fr"
-        value={emailAddress}
-        onChangeText={setEmailAddress}
-        style={styles.inputField}
-      />
-      <TextInput
-        placeholder="password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.inputField}
-      />
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerTitle}>Ressources Relationnelles</Text>
+      </View>
 
-      <Button onPress={onSignInPress} title="Login" color={"#6c47ff"}></Button>
+      <View style={styles.formContainer}>
+        <TextInput
+          autoCapitalize="none"
+          placeholder="exemple@mail.fr"
+          value={emailAddress}
+          onChangeText={setEmailAddress}
+          style={styles.inputField}
+        />
+        <TextInput
+          placeholder="password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.inputField}
+        />
 
-      <Link href="/reset" asChild>
-        <Pressable style={styles.button}>
-          <Text>Mot de passe oublié ?</Text>
-        </Pressable>
-      </Link>
-      <Link href="/register" asChild>
-        <Pressable style={styles.button}>
-          <Text>Créer un compte</Text>
-        </Pressable>
-      </Link>
-    </View>
+        <TouchableOpacity style={styles.loginButton} onPress={onSignInPress}>
+          <Text style={styles.loginButtonText}>LOGIN</Text>
+        </TouchableOpacity>
+
+        <Link href="/reset" asChild>
+          <TouchableOpacity style={styles.linkButton}>
+            <Text style={styles.linkText}>Mot de passe oublié ?</Text>
+          </TouchableOpacity>
+        </Link>
+
+        <Link href="/register" asChild>
+          <TouchableOpacity style={styles.linkButton}>
+            <Text style={styles.linkText}>Créer un compte</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    backgroundColor: "#f5f6fa",
+  },
+  headerContainer: {
+    backgroundColor: "#09B1B9", // Teal color from the first image
+    padding: 16,
+    alignItems: "center",
+  },
+  headerTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  formContainer: {
     padding: 20,
+    justifyContent: "center",
+    flex: 1,
   },
   inputField: {
-    marginVertical: 4,
+    marginVertical: 8,
     height: 50,
     borderWidth: 1,
-    borderColor: "#6c47ff",
+    borderColor: "#E0E0E0",
     borderRadius: 4,
     padding: 10,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
   },
-  button: {
-    margin: 8,
+  loginButton: {
+    backgroundColor: "#09B1B9", // Teal color from the first image
+    paddingVertical: 14,
+    borderRadius: 4,
     alignItems: "center",
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  loginButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  linkButton: {
+    padding: 10,
+    alignItems: "center",
+  },
+  linkText: {
+    color: "#09B1B9", // Teal color from the first image
+    fontSize: 14,
   },
 });
 
