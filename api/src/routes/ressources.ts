@@ -67,7 +67,7 @@ router.post<{}, any, RessourceEntity>("/", async (req, res) => {
         title,
         description,
         user: {
-          connect: { id: userId },
+          connect: { clerkUserId: userId as string },
         },
         ressourceType: {
           connect: { id: ressourceTypeId },
