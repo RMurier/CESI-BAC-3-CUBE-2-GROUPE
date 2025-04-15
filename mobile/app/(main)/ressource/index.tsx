@@ -19,6 +19,11 @@ import {
   RessourceTypeEntity,
 } from "../../../types/ressources";
 import { CategoryEntity } from "../../../types/category";
+import {
+  getCategories,
+  getRessources,
+  getRessourceTypes,
+} from "../../../services/api";
 
 export default function ResourcesScreen() {
   const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -113,15 +118,10 @@ export default function ResourcesScreen() {
   const fetchResourceTypes = async () => {
     try {
       setTypesLoading(true);
-      const response = await fetch(`${apiUrl}/ressourceTypes`);
 
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
-      }
+      const result = await getRessourceTypes();
 
-      const result = await response.json();
-
-      setAvailableTypes(result.data || []);
+      setAvailableTypes(result || []);
     } catch (err) {
       console.error(
         "Erreur lors de la récupération des types de ressources:",
@@ -140,14 +140,9 @@ export default function ResourcesScreen() {
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
-      const response = await fetch(`${apiUrl}/categories`);
 
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-      setAvailableCategories(result.data || []);
+      const result = await getCategories();
+      setAvailableCategories(result || []);
     } catch (err) {
       console.error("Erreur lors de la récupération des catégories:", err);
       // Fallback to extracting from resources if API call fails
@@ -160,10 +155,11 @@ export default function ResourcesScreen() {
     }
   };
 
-  const filterResources = () => {
-    console.log("type: ", selectedType?.name);
-    console.log("catégorie: ", selectedCategory?.name);
+  const navigateToAddResource = () => {
+    router.push("/ressource/add");
+  };
 
+  const filterResources = () => {
     let results = [...resources];
 
     // Filter by search text (resource name/title)
@@ -190,7 +186,6 @@ export default function ResourcesScreen() {
         (item) => item.categoryId === selectedCategory.id
       );
     }
-    console.log("rsults", results);
     setFilteredResources(results);
   };
 
@@ -272,42 +267,61 @@ export default function ResourcesScreen() {
   type Props = {
     item: RessourceEntity;
   };
-  const renderItem = ({ item }: Props) => (
-    <TouchableOpacity
-      style={styles.resourceItem}
-      onPress={() =>
-        router.push({
-          pathname: "/ressource/[id]",
-          params: { id: item.id },
-        })
+  const renderItem = ({ item }: Props) => {
+    // Fonction pour déterminer l'icône selon le type
+    const getTypeIcon = () => {
+      switch (item.ressourceType.name?.toLowerCase()) {
+        case "public":
+          return "🌐"; // Icône pour public
+        case "privé":
+          return "🔒"; // Icône pour privé
+        case "partagé":
+          return "👥"; // Icône pour partagé
+        default:
+          return "📄"; // Icône par défaut
       }
-    >
-      <View style={styles.resourceHeader}>
-        <Text style={styles.resourceTitle}>{item.title}</Text>
-        {item.isActive && <View style={styles.activeIndicator} />}
-      </View>
-      <Text style={styles.resourceDescription} numberOfLines={2}>
-        {item.description}
-      </Text>
-      <View style={styles.resourceMeta}>
-        {item.ressourceType && (
-          <Text style={styles.resourceMetaText}>
-            Type: {item.ressourceType.name}
-          </Text>
-        )}
-        {item.category && (
-          <Text style={styles.resourceMetaText}>
-            Catégorie: {item.category.name}
-          </Text>
-        )}
-      </View>
-      <View style={styles.resourceFooter}>
-        <Text style={styles.resourceDate}>
-          Créé le: {formatDate(item.createdAt.toString())}
+    };
+
+    return (
+      <TouchableOpacity
+        style={styles.resourceItem}
+        onPress={() =>
+          router.push({
+            pathname: "/ressource/[id]",
+            params: { id: item.id },
+          })
+        }
+      >
+        <View style={styles.resourceHeader}>
+          <Text style={styles.resourceTitle}>{item.title}</Text>
+          {item.isActive && <View style={styles.activeIndicator} />}
+        </View>
+        <Text style={styles.resourceDescription} numberOfLines={2}>
+          {item.description}
         </Text>
-      </View>
-    </TouchableOpacity>
-  );
+        <View style={styles.resourceMeta}>
+          {item.category && (
+            <Text style={styles.resourceMetaText}>
+              Catégorie: {item.category.name}
+            </Text>
+          )}
+        </View>
+        <View style={styles.resourceFooter}>
+          <Text style={styles.resourceDate}>
+            Créé le: {formatDate(item.createdAt.toString())}
+          </Text>
+
+          {/* Affichage du type avec icône en bas à droite */}
+          {item.ressourceType && (
+            <View style={styles.typeContainer}>
+              <Text style={styles.typeIcon}>{getTypeIcon()}</Text>
+              <Text style={styles.typeText}>{item.ressourceType.name}</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (!isSignedIn) {
     return (
@@ -340,10 +354,24 @@ export default function ResourcesScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.refreshButton}
-            onPress={() => {
-              fetchResources();
-              fetchResourceTypes();
-              fetchCategories();
+            onPress={async () => {
+              setLoading(true);
+
+              try {
+                const ressources = await getRessources();
+                if (ressources) {
+                  setResources(ressources);
+                }
+                fetchResourceTypes();
+                fetchCategories();
+              } catch (e) {
+                console.log(e);
+                setError(
+                  "Impossible de charger les ressources. Veuillez réessayer plus tard."
+                );
+              } finally {
+                setLoading(false);
+              }
             }}
           >
             <Ionicons name="refresh-outline" size={22} color="#0066cc" />
@@ -421,6 +449,13 @@ export default function ResourcesScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={navigateToAddResource}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="add" size={24} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -658,6 +693,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: 4,
+  },
+
+  typeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  typeIcon: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  typeText: {
+    fontSize: 12,
+    color: "#888",
+    fontWeight: "500",
+  },
+  fab: {
+    position: "absolute",
+    right: 16,
+    bottom: 24,
+    backgroundColor: "#009B95", // Couleur turquoise assortie à votre thème
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5, // Pour Android
+    shadowColor: "#000", // Pour iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    zIndex: 100,
   },
   // chipContainer: {
   //   flexDirection: "row",
