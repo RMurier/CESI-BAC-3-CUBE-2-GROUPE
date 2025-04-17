@@ -20,17 +20,18 @@ model Role {
 }
 
 model User {
-  id          Int         @id @default(autoincrement())
-  clerkUserId String      @unique
-  email       String      @unique
+  id          Int           @id @default(autoincrement())
+  clerkUserId String        @unique
+  email       String        @unique
   name        String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @default(now()) @updatedAt()
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt()
   comment     Comment[]
-  roleId      Int         @default(1)
-  role        Role        @relation(fields: [roleId], references: [id])
-  isActivated Boolean     @default(true)
+  roleId      Int           @default(1)
+  role        Role          @relation(fields: [roleId], references: [id])
+  isActivated Boolean       @default(true)
   Ressources  Ressource[]
+  likes       CommentLike[]
 }
 
 model Category {
@@ -72,4 +73,30 @@ model Comment {
   author      User      @relation(fields: [authorId], references: [id])
   ressourceId String
   ressource   Ressource @relation(fields: [ressourceId], references: [id])
+
+  // Pour gérer les réponses aux commentaires
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies  Comment[] @relation("CommentReplies")
+
+  // Pour gérer les likes
+  likes CommentLike[]
+
+  @@index([ressourceId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+// Nouveau modèle pour les likes des commentaires
+model CommentLike {
+  id        String   @id @default(uuid())
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId]) // Un utilisateur ne peut liker qu'une seule fois un commentaire
+  @@index([userId])
+  @@index([commentId])
 }

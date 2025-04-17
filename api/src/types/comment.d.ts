@@ -5,8 +5,15 @@ export type CommentEntity = {
   id: string;
   content: string;
   publishedAt: Date;
-  authorId: number | string;
-  author?: UserEntity;
+  authorId: number;
+  author: UserEntity;
   ressourceId: number;
-  ressource?: RessourceEntity;
+  ressource: RessourceEntity;
+  parentId: string | null;
+};
+
+export type CommentCreateBody = {
+  content: string;
+  authorId: number;
+  parentId?: string;
 };

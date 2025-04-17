@@ -42,7 +42,6 @@ router.patch("/role/:id", async (req, res) => {
   }
 });
 
-
 router.patch("/desactivate/:id", async (req, res) => {
   const userId = await req.params.id;
   const isActivated = await req.body.isActivated;
@@ -51,33 +50,31 @@ router.patch("/desactivate/:id", async (req, res) => {
       where: {
         id: parseInt(userId),
       },
-      data : {
+      data: {
         isActivated: isActivated,
-      }
-    })
+      },
+    });
 
     res.status(200).json(user);
-  }
-  catch (ex) {
+  } catch (ex) {
     console.error(ex);
     res.status(500).json("Internal server error");
   }
-})
+});
 
 router.get("/", async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       include: {
-        role: true
-      }
-    })
-    res.status(200).json(users);
-  }
-  catch (ex) {
+        role: true,
+      },
+    });
+    res.status(200).json({ data: users });
+  } catch (ex) {
     console.error(ex);
     res.status(500).json({ error: "Internal server error", details: ex });
   }
-})
+});
 
 router.get("/:clerkId", async (req, res) => {
   const id = req.params.clerkId;
@@ -89,9 +86,8 @@ router.get("/:clerkId", async (req, res) => {
       },
     });
 
-    res.status(200).json(user);
-  }
-  catch (e) {
+    res.status(200).json({ data: user });
+  } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Internal server error", details: e });
   }

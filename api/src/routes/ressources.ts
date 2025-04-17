@@ -2,7 +2,6 @@ import express, { Request, Response } from "express";
 import prisma from "../utils/database";
 import { RessourceEntity } from "../types/ressources";
 import commentsRouter from "./comments";
-import { connect } from "http2";
 
 const router = express.Router();
 router.use("/:ressourceId/comments", commentsRouter);

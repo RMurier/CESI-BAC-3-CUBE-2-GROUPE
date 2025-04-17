@@ -12,8 +12,6 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  FlatList,
-  Image,
   Animated,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -22,6 +20,11 @@ import { Ionicons, AntDesign } from "@expo/vector-icons";
 import { UserEntity } from "../../../types/user";
 import { RessourceEntity } from "../../../types/ressources";
 import { CommentEntity } from "../../../types/comment";
+import { changeLike, getCurrentUser } from "../../../services/api";
+
+type CommentWithReplies = CommentEntity & {
+  replies?: CommentWithReplies[];
+};
 
 export default function ResourceDetailScreen() {
   const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -33,7 +36,7 @@ export default function ResourceDetailScreen() {
   const commentInputRef = useRef<TextInput>(null);
 
   const [resource, setResource] = useState<RessourceEntity | null>(null);
-  const [comments, setComments] = useState<CommentEntity[]>([]);
+  const [comments, setComments] = useState<CommentWithReplies[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
@@ -43,7 +46,7 @@ export default function ResourceDetailScreen() {
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
 
   // Animation pour les nouveaux commentaires
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     fetchResourceDetails();
@@ -82,12 +85,53 @@ export default function ResourceDetailScreen() {
       }
 
       const result = await response.json();
-      // Trier les commentaires par date (plus récents en premier)
-      const sortedComments = (result.data || []).sort(
-        (a: CommentEntity, b: CommentEntity) =>
+
+      // Organiser les commentaires en hiérarchie (parents et réponses)
+      const commentsData = result.data || [];
+      const commentMap = new Map();
+      const rootComments: CommentWithReplies[] = [];
+
+      // Première passe: créer un Map de tous les commentaires
+      commentsData.forEach((comment: CommentEntity) => {
+        commentMap.set(comment.id, { ...comment, replies: [] });
+      });
+
+      // Deuxième passe: organiser en hiérarchie
+      commentsData.forEach((comment: CommentEntity) => {
+        const commentWithReplies = commentMap.get(comment.id);
+        if (comment.parentId) {
+          // C'est une réponse, l'ajouter au parent
+          const parent = commentMap.get(comment.parentId);
+          if (parent) {
+            parent.replies.push(commentWithReplies);
+          } else {
+            // Parent non trouvé, traiter comme un commentaire racine
+            rootComments.push(commentWithReplies);
+          }
+        } else {
+          // C'est un commentaire racine
+          rootComments.push(commentWithReplies);
+        }
+      });
+
+      // Trier les commentaires racines par date (plus récents en premier)
+      const sortedRootComments = rootComments.sort(
+        (a, b) =>
           new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
       );
-      setComments(sortedComments);
+
+      // Trier également les réponses par date (plus anciennes en premier pour les réponses)
+      sortedRootComments.forEach((comment) => {
+        if (comment.replies && comment.replies.length > 0) {
+          comment.replies.sort(
+            (a, b) =>
+              new Date(a.publishedAt).getTime() -
+              new Date(b.publishedAt).getTime()
+          );
+        }
+      });
+
+      setComments(sortedRootComments);
     } catch (err) {
       console.error("Erreur lors de la récupération des commentaires:", err);
     } finally {
@@ -104,13 +148,14 @@ export default function ResourceDetailScreen() {
 
     try {
       setSubmittingComment(true);
+      if (!userId) {
+        throw new Error("Clerk user id not found.");
+      }
 
-      // Préparer le contenu du commentaire (inclure @mention si réponse)
-      let commentContent = newComment;
-      if (replyTo) {
-        commentContent = `@${
-          replyTo.author?.name || "utilisateur"
-        } ${commentContent}`;
+      const user = await getCurrentUser(userId);
+
+      if (!user) {
+        throw new Error("User could not be found in the database.");
       }
 
       const response = await fetch(`${apiUrl}/ressources/${id}/comments`, {
@@ -119,17 +164,15 @@ export default function ResourceDetailScreen() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          content: commentContent,
-          authorId: userId,
+          content: newComment,
+          authorId: user.id,
+          parentId: replyTo?.id || null,
         }),
       });
 
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
-
-      // Récupérer le nouveau commentaire de la réponse
-      const result = await response.json();
 
       // Animation du nouveau commentaire
       fadeAnim.setValue(0);
@@ -165,7 +208,6 @@ export default function ResourceDetailScreen() {
 
   const handleReply = (comment: CommentEntity) => {
     setReplyTo(comment);
-    setNewComment(`@${comment.author?.name || "utilisateur"} `);
     if (commentInputRef.current) {
       commentInputRef.current.focus();
     }
@@ -176,7 +218,11 @@ export default function ResourceDetailScreen() {
     setNewComment("");
   };
 
-  const toggleLike = (commentId: string) => {
+  const toggleLike = async (commentId: string) => {
+    const user = await getCurrentUser(userId!);
+
+    if (!user) throw new Error("User not found in database.");
+
     const newLikedComments = new Set(likedComments);
     if (likedComments.has(commentId)) {
       newLikedComments.delete(commentId);
@@ -184,8 +230,9 @@ export default function ResourceDetailScreen() {
       newLikedComments.add(commentId);
     }
     setLikedComments(newLikedComments);
+    console.log("comment id:", commentId, "userId:", user.id);
 
-    // Ici, vous pourriez implémenter l'appel API pour sauvegarder le like
+    changeLike(commentId, user.id);
   };
 
   const formatDate = (dateString: string) => {
@@ -211,6 +258,80 @@ export default function ResourceDetailScreen() {
       });
     }
   };
+
+  // Composant pour afficher un commentaire et ses réponses
+  const CommentItem = ({
+    comment,
+    isReply = false,
+  }: {
+    comment: CommentWithReplies;
+    isReply?: boolean;
+  }) => (
+    <View style={[styles.commentItem, isReply && styles.replyItem]}>
+      <View style={styles.commentHeader}>
+        <View style={styles.commentAuthorContainer}>
+          <View
+            style={[styles.commentAvatar, isReply && styles.commentReplyAvatar]}
+          >
+            <Text
+              style={[
+                styles.commentAvatarText,
+                isReply && styles.commentReplyAvatarText,
+              ]}
+            >
+              {comment.author?.name?.[0]?.toUpperCase() || "U"}
+            </Text>
+          </View>
+          <Text style={styles.commentAuthorName}>
+            {comment.author?.name || "Utilisateur"}
+          </Text>
+        </View>
+        <Text style={styles.commentDate}>
+          {formatDate(comment.publishedAt.toString())}
+        </Text>
+      </View>
+
+      <Text style={styles.commentContent}>{comment.content}</Text>
+
+      <View style={styles.commentActions}>
+        <TouchableOpacity
+          style={styles.commentAction}
+          onPress={() => toggleLike(comment.id)}
+        >
+          <AntDesign
+            name={likedComments.has(comment.id) ? "heart" : "hearto"}
+            size={16}
+            color={likedComments.has(comment.id) ? "#FF3B30" : "#666"}
+          />
+          <Text
+            style={[
+              styles.commentActionText,
+              likedComments.has(comment.id) && styles.commentActionTextActive,
+            ]}
+          >
+            J'aime
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.commentAction}
+          onPress={() => handleReply(comment)}
+        >
+          <Ionicons name="chatbubble-outline" size={16} color="#666" />
+          <Text style={styles.commentActionText}>Répondre</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Afficher les réponses s'il y en a */}
+      {comment.replies && comment.replies.length > 0 && (
+        <View style={styles.repliesContainer}>
+          {comment.replies.map((reply) => (
+            <CommentItem key={reply.id} comment={reply} isReply={true} />
+          ))}
+        </View>
+      )}
+    </View>
+  );
 
   if (!isSignedIn) {
     return (
@@ -343,64 +464,8 @@ export default function ResourceDetailScreen() {
             </Text>
           ) : (
             comments.map((comment, index) => (
-              <Animated.View
-                key={comment.id}
-                style={[
-                  styles.commentItem,
-                  index === 0 && { opacity: fadeAnim },
-                ]}
-              >
-                <View style={styles.commentHeader}>
-                  <View style={styles.commentAuthorContainer}>
-                    <View style={styles.commentAvatar}>
-                      <Text style={styles.commentAvatarText}>
-                        {comment.author?.name?.[0]?.toUpperCase() || "U"}
-                      </Text>
-                    </View>
-                    <Text style={styles.commentAuthorName}>
-                      {comment.author?.name || "Utilisateur"}
-                    </Text>
-                  </View>
-                  <Text style={styles.commentDate}>
-                    {formatDate(comment.publishedAt.toString())}
-                  </Text>
-                </View>
-
-                <Text style={styles.commentContent}>{comment.content}</Text>
-
-                <View style={styles.commentActions}>
-                  <TouchableOpacity
-                    style={styles.commentAction}
-                    onPress={() => toggleLike(comment.id)}
-                  >
-                    <AntDesign
-                      name={likedComments.has(comment.id) ? "heart" : "hearto"}
-                      size={16}
-                      color={likedComments.has(comment.id) ? "#FF3B30" : "#666"}
-                    />
-                    <Text
-                      style={[
-                        styles.commentActionText,
-                        likedComments.has(comment.id) &&
-                          styles.commentActionTextActive,
-                      ]}
-                    >
-                      J'aime
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.commentAction}
-                    onPress={() => handleReply(comment)}
-                  >
-                    <Ionicons
-                      name="chatbubble-outline"
-                      size={16}
-                      color="#666"
-                    />
-                    <Text style={styles.commentActionText}>Répondre</Text>
-                  </TouchableOpacity>
-                </View>
+              <Animated.View key={comment.id} style={[{ opacity: 1 }]}>
+                <CommentItem comment={comment} />
               </Animated.View>
             ))
           )}
@@ -436,7 +501,9 @@ export default function ResourceDetailScreen() {
             style={styles.commentInput}
             value={newComment}
             onChangeText={setNewComment}
-            placeholder="Ajouter un commentaire..."
+            placeholder={
+              replyTo ? "Écrivez une réponse..." : "Ajouter un commentaire..."
+            }
             multiline
             maxLength={500}
             placeholderTextColor="#999"
@@ -584,7 +651,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 16,
   },
   commentTitle: {
     fontSize: 18,
@@ -599,27 +666,47 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   commentItem: {
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-    paddingVertical: 12,
+  },
+  replyItem: {
+    paddingLeft: 8,
+    borderLeftWidth: 1,
+    borderLeftColor: "#ddd",
+    borderBottomWidth: 0,
+    marginTop: 8,
+  },
+  repliesContainer: {
+    marginLeft: 20,
+    marginTop: 4,
   },
   commentAuthorContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
   commentAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: "#0066cc",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 8,
   },
+  commentReplyAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#5c8dc8",
+  },
   commentAvatarText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 14,
+  },
+  commentReplyAvatarText: {
+    fontSize: 12,
   },
   commentAuthorName: {
     fontSize: 14,
@@ -627,9 +714,9 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   commentContent: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#333",
-    marginVertical: 8,
+    marginVertical: 6,
     lineHeight: 20,
   },
   commentDate: {

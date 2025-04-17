@@ -9,9 +9,11 @@ export type CommentEntity = {
   author: UserEntity;
   ressourceId: number;
   ressource: RessourceEntity;
+  parentId: string;
 };
 
 export type CommentCreateBody = {
   content: string;
   authorId: number;
+  parentId?: string;
 };
