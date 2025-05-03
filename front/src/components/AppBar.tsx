@@ -20,9 +20,9 @@ export function AppBar() {
         try {
             const res = await fetch(`${import.meta.env.VITE_BASE_URL}/users/${user.id}`);
             if (res.ok) {
-                const data = await res.json();
-                setIsAdmin(data.roleId === 3 || data.roleId === 4);
-                if (data.roleId === 4) {
+                let data = await res.json();
+                setIsAdmin(data.data.roleId === 3 || data.data.roleId === 4);
+                if (data.data.roleId === 4) {
                     setIsSuperAdmin(true);
                 }
                 else {
