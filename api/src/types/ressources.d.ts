@@ -12,7 +12,7 @@ export type RessourceEntity = {
   category: CategoryEntity;
   ressourceTypeId: number;
   ressourceType: RessourceTypeEntity;
-  userId: number;
+  userId: number | string;
   user: UserEntity;
 };
 

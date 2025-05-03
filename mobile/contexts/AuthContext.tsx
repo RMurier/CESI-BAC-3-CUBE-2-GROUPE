@@ -49,14 +49,11 @@ export default function AuthContextProvider({
     const fetchUserData = async () => {
       if (isSignedIn && clerkUser) {
         try {
-          // Obtenir le token JWT pour les requêtes API
           const jwt = await getToken();
           setToken(jwt);
 
-          // Configuration d'axios avec le token
           axios.defaults.headers.common["Authorization"] = `Bearer ${jwt}`;
 
-          // Récupérer les données utilisateur de votre API
           const response = await axios.get(`${url}/users/${user?.clerkUserId}`);
           setUser(response.data);
         } catch (error) {
