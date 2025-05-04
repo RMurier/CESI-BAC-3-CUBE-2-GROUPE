@@ -24,9 +24,8 @@ const CategoryScreen = () => {
 
     const fetchRessources = async () => {
       try {
-        console.log(name)
         const response = await fetch(
-          `${apiUrl}/ressources/${encodeURIComponent(name)}/ressources`
+          `${apiUrl}/categories/${encodeURIComponent(name)}/ressources`
         );
 
         if (!response.ok) {

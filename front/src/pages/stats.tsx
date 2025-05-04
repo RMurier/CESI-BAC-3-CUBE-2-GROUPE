@@ -43,10 +43,10 @@ export const StatsPage = () => {
     const userData = await userRes.json();
     const catList = await catListRes.json();
 
-    setResourcesByCategory(catData);
-    setResourcesByDate(dateData);
+    setResourcesByCategory(catData.data);
+    setResourcesByDate(dateData.data);
     setUserCount(userData.count);
-    setCategories(catList);
+    setCategories(catList.data);
   };
 
   useEffect(() => {

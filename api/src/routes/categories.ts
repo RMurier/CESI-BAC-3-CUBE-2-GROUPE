@@ -124,4 +124,32 @@ router.get("/:categoryId", async (req, res) => {
   }
 });
 
+router.get("/:name/ressources", async (req: Request<{name: string}>, res: any) => {
+  const name = req.params.name;
+
+  try {
+    const category = await prisma.category.findFirst({
+      where: { name },
+    });
+
+    if (!category) {
+      return res.status(404).json({ message: "Catégorie non trouvée" });
+    }
+
+    const ressources = await prisma.ressource.findMany({
+      where: { categoryId: category.id },
+      include: {
+        category: true,
+        ressourceType: true,
+      },
+    });
+
+    res.status(200).json({ data: ressources });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+
 export default router;

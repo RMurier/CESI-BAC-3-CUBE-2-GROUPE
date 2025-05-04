@@ -24,7 +24,7 @@ export const UsersPage = () => {
     setLoading(true);
     const res = await fetch(`${BASE_URL}/users`);
     const data = await res.json();
-    setUsers(data);
+    setUsers(data.data);
     setLoading(false);
   };
 
