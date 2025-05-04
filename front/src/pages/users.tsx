@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Role } from "../interfaces/role";
 import { User } from "../interfaces/user";
 import { useRoleStore } from "../stores/roleStore";
-import { useFetcher } from "react-router-dom";
 
 export const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
