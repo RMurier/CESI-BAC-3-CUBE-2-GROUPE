@@ -52,7 +52,7 @@ export default function ResourcesScreen() {
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [filtersHeight] = useState(new Animated.Value(0));
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, userId } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -91,19 +91,25 @@ export default function ResourcesScreen() {
   const fetchResources = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${apiUrl}/ressources`);
-
+  
+      let response;
+  
+      if (userId) {
+        response = await fetch(
+          `${apiUrl}/ressources/accessible?clerkUserId=${encodeURIComponent(userId)}`
+        );
+      } else {
+        response = await fetch(`${apiUrl}/ressources/public`);
+      }
+  
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
-
+  
       const result = await response.json();
       const resourcesList = result.data || ([] as RessourceEntity[]);
       setResources(resourcesList);
       setFilteredResources(resourcesList);
-      // Extract unique types and categories for filtering
-      // extractFilterOptions(resourcesList);
-
       setError("");
     } catch (err) {
       console.error("Erreur lors de la récupération des ressources:", err);
@@ -114,7 +120,7 @@ export default function ResourcesScreen() {
       setLoading(false);
     }
   };
-
+  
   const fetchResourceTypes = async () => {
     try {
       setTypesLoading(true);

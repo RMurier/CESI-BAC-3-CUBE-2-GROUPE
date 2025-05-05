@@ -32,6 +32,7 @@ model User {
   isActivated Boolean       @default(true)
   Ressources  Ressource[]
   likes       CommentLike[]
+  sharedRessources SharedRessource[]
 }
 
 model Category {
@@ -56,6 +57,7 @@ model Ressource {
   comments        Comment[]
   userId          Int
   user            User          @relation(fields: [userId], references: [id])
+  sharedWithUsers SharedRessource[]
 }
 
 model RessourceType {
@@ -99,4 +101,17 @@ model CommentLike {
   @@unique([commentId, userId]) // Un utilisateur ne peut liker qu'une seule fois un commentaire
   @@index([userId])
   @@index([commentId])
+}
+
+model SharedRessource {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ressourceId  String
+  ressource    Ressource @relation(fields: [ressourceId], references: [id], onDelete: Cascade)
+  sharedAt     DateTime  @default(now())
+
+  @@unique([userId, ressourceId]) // Un utilisateur ne peut recevoir la ressource qu'une fois
+  @@index([ressourceId])
+  @@index([userId])
 }

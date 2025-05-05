@@ -6,9 +6,8 @@ export default function CategoriesLayout() {
       <Stack.Screen
         name="[name]"
         options={({ route }) => {
-          const name = route?.params?.name as string;
           return {
-            title: `Catégorie : ${name}`,
+            title: `Catégorie : ${route?.params?.name as string}`,
           };
         }}
       />

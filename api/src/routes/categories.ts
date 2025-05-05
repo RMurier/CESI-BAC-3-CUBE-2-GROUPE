@@ -124,7 +124,7 @@ router.get("/:categoryId", async (req, res) => {
   }
 });
 
-router.get("/:name/ressources", async (req: Request<{name: string}>, res: any) => {
+router.get("/:name/ressources", async (req: TypedRequestBody<string>, res: any) => {
   const name = req.params.name;
 
   try {

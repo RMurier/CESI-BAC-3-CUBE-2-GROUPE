@@ -17,10 +17,10 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
-import { UserEntity } from "../../../types/user";
 import { RessourceEntity } from "../../../types/ressources";
 import { CommentEntity } from "../../../types/comment";
 import { changeLike, getCurrentUser } from "../../../services/api";
+import { UserEntity } from "../../../types/user";
 
 type CommentWithReplies = CommentEntity & {
   replies?: CommentWithReplies[];
@@ -44,6 +44,10 @@ export default function ResourceDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [replyTo, setReplyTo] = useState<CommentEntity | null>(null);
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
+  const [users, setUsers] = useState<UserEntity[]>([]);
+  const [showShareList, setShowShareList] = useState(false);
+  const [currentDbUser, setCurrentDbUser] = useState<UserEntity | null>(null);
+
 
   // Animation pour les nouveaux commentaires
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -51,7 +55,14 @@ export default function ResourceDetailScreen() {
   useEffect(() => {
     fetchResourceDetails();
     fetchComments();
+    loadCurrentUser()
   }, [id]);
+
+  useEffect(() => {
+    if (showShareList) {
+      fetchUsers();
+    }
+  }, [showShareList]);
 
   const fetchResourceDetails = async () => {
     try {
@@ -74,6 +85,41 @@ export default function ResourceDetailScreen() {
       setLoading(false);
     }
   };
+
+  const loadCurrentUser = async () => {
+    if (userId) {
+      const user = await getCurrentUser(userId);
+      setCurrentDbUser(user);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/users`);
+      const result = await response.json();
+      setUsers(result.data || []);
+    } catch (err) {
+      Alert.alert("Erreur", "Impossible de charger les utilisateurs.");
+    }
+  };
+
+  const shareWithUser = async (targetUserId: number) => {
+    try {
+      const response = await fetch(`${apiUrl}/ressources/${id}/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: targetUserId }),
+      });
+
+      if (!response.ok) throw new Error("Échec du partage");
+
+      Alert.alert("Succès", "Ressource partagée !");
+      setShowShareList(false);
+    } catch (err) {
+      Alert.alert("Erreur", "Impossible de partager la ressource.");
+    }
+  };
+
 
   const fetchComments = async () => {
     try {
@@ -402,7 +448,50 @@ export default function ResourceDetailScreen() {
         <Text style={styles.headerTitle} numberOfLines={1}>
           Détails de la ressource
         </Text>
+        {currentDbUser?.id === resource?.userId && (
+    <TouchableOpacity
+      onPress={() => {
+        fetchUsers();
+        setShowShareList(!showShareList);
+      }}
+    >
+      <Ionicons name="person-add" size={24} color="#0066cc" />
+    </TouchableOpacity>
+  )}
       </View>
+
+      {showShareList && (
+  <View style={{ padding: 16, backgroundColor: "#f0f0f0" }}>
+    <Text style={{ marginBottom: 8, fontWeight: "bold" }}>
+      Partager avec :
+    </Text>
+
+    {users.length === 0 ? (
+      <Text style={{ fontStyle: "italic", color: "#888" }}>
+        Aucun utilisateur à afficher.
+      </Text>
+    ) : (
+      users
+        .filter((u) => u.id !== currentDbUser?.id)
+        .map((u) => (
+          <TouchableOpacity
+            key={u.id}
+            onPress={() => shareWithUser(u.id)}
+            style={{
+              backgroundColor: "#fff",
+              padding: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: "#ddd",
+            }}
+          >
+            <Text>{u.name || u.email}</Text>
+          </TouchableOpacity>
+        ))
+    )}
+  </View>
+)}
+
+
 
       <ScrollView
         ref={scrollViewRef}
@@ -513,7 +602,7 @@ export default function ResourceDetailScreen() {
             style={[
               styles.sendButton,
               (!newComment.trim() || submittingComment) &&
-                styles.sendButtonDisabled,
+              styles.sendButtonDisabled,
             ]}
             onPress={submitComment}
             disabled={!newComment.trim() || submittingComment}
