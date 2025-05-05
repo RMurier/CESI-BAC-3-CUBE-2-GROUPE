@@ -20,7 +20,7 @@ export const CategoriesPage = () => {
     setLoading(true);
     const res = await fetch(`${BASE_URL}/categories`);
     const data = await res.json();
-    setCategories(data);
+    setCategories(data.data);
     setLoading(false);
   };
 

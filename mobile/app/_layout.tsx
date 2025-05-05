@@ -10,19 +10,19 @@ const InitialLayout = () => {
   const segments = useSegments();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isLoaded) return;
+  // useEffect(() => {
+  //   if (!isLoaded) return;
 
-    const inTabsGroup = segments[0] === "(main)";
+  //   const inTabsGroup = segments[0] === "(main)";
 
-    // console.log("User changed: ", isSignedIn);
+  //   // console.log("User changed: ", isSignedIn);
 
-    if (isSignedIn && !inTabsGroup) {
-      router.replace("/home");
-    } else if (!isSignedIn) {
-      router.replace("/login");
-    }
-  }, [isSignedIn]);
+  //   if (isSignedIn && !inTabsGroup) {
+  //     router.replace("/home");
+  //   } else if (!isSignedIn) {
+  //     router.replace("/login");
+  //   }
+  // }, [isSignedIn]);
 
   return <Slot />;
 };

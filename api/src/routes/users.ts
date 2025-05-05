@@ -1,7 +1,6 @@
 import express from "express";
 import prisma from "../utils/database";
 import { User } from "@prisma/client";
-import { startSession } from "mongoose";
 
 const router = express.Router();
 

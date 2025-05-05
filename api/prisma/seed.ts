@@ -1,4 +1,4 @@
-import prisma from "./utils/database";
+import prisma from "../src/utils/database";
 
 async function main() {
   await prisma.category.create({
@@ -16,7 +16,7 @@ async function main() {
     ],
   });
   await prisma.ressourceType.createMany({
-    data: [{ name: "Public" }, { name: "Privé" }, { name: "Partagé" }],
+    data: [{ name: "Public" }, { name: "Privé" }],
   });
 }
 main()

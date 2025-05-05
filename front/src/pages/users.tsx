@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Role } from "../interfaces/role";
 import { User } from "../interfaces/user";
 import { useRoleStore } from "../stores/roleStore";
-import { useFetcher } from "react-router-dom";
 
 export const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -25,7 +24,7 @@ export const UsersPage = () => {
     setLoading(true);
     const res = await fetch(`${BASE_URL}/users`);
     const data = await res.json();
-    setUsers(data);
+    setUsers(data.data);
     setLoading(false);
   };
 

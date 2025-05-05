@@ -32,8 +32,8 @@ export const RessourcesPage = () => {
     ]);
     const ressourcesData = await resR.json();
     const categoriesData = await resC.json();
-    setRessources(ressourcesData);
-    setCategories(categoriesData);
+    setRessources(ressourcesData.data);
+    setCategories(categoriesData.data);
     setLoading(false);
   };
 
