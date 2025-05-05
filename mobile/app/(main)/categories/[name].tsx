@@ -8,9 +8,13 @@ import {
   StyleSheet,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { RessourceEntity } from "../../../types/ressources";
 
 const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+const capitalize = (s?: string) =>
+  s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
 
 const CategoryScreen = () => {
   const { name } = useLocalSearchParams<{ name: string }>();
@@ -66,47 +70,69 @@ const CategoryScreen = () => {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Catégorie : {name}</Text>
+    <View style={styles.wrapper}>
 
-      {ressources.length === 0 ? (
-        <Text style={styles.message}>Aucune ressource trouvée.</Text>
-      ) : (
-        ressources.map((ressource) => (
-          <TouchableOpacity
-            key={ressource.id}
-            style={styles.card}
-            onPress={() => router.push(`/ressource/${ressource.id}`)}
-          >
-            <Text style={styles.cardTitle}>{ressource.title}</Text>
-            <Text style={styles.cardDescription} numberOfLines={2}>
-              {ressource.description}
-            </Text>
-          </TouchableOpacity>
-        ))
-      )}
-    </ScrollView>
+      <ScrollView contentContainerStyle={styles.container}>
+        {ressources.length === 0 ? (
+          <Text style={styles.message}>Aucune ressource trouvée.</Text>
+        ) : (
+          ressources.map((ressource) => (
+            <TouchableOpacity
+              key={ressource.id}
+              style={styles.card}
+              onPress={() => router.push(`/ressource/${ressource.id}`)}
+            >
+              <Text style={styles.cardTitle}>{ressource.title}</Text>
+              <Text style={styles.cardDescription} numberOfLines={2}>
+                {ressource.description}
+              </Text>
+            </TouchableOpacity>
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
 export default CategoryScreen;
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: "#f9f9f9",
+  },
+  customHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 50,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
   container: {
     padding: 16,
-    backgroundColor: "#f9f9f9",
   },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 16,
-    color: "#333",
+    backgroundColor: "#f9f9f9",
   },
   message: {
     fontSize: 14,
