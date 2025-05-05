@@ -124,7 +124,7 @@ router.get("/:categoryId", async (req, res) => {
   }
 });
 
-router.get("/:name/ressources", async (req: TypedRequestBody<string>, res: any) => {
+router.get("/:name/public", async (req, res: any) => {
   const name = req.params.name;
 
   try {
@@ -137,19 +137,90 @@ router.get("/:name/ressources", async (req: TypedRequestBody<string>, res: any) 
     }
 
     const ressources = await prisma.ressource.findMany({
-      where: { categoryId: category.id },
+      where: {
+        categoryId: category.id,
+        ressourceType: {
+          name: {
+            equals: "Public", // Attention à la casse dans la base
+            mode: "insensitive",
+          },
+        },
+      },
       include: {
         category: true,
         ressourceType: true,
       },
     });
 
-    res.status(200).json({ data: ressources });
+    return res.status(200).json({ data: ressources });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erreur serveur" });
+    console.error("Erreur récupération ressources publiques :", err);
+    return res.status(500).json({ message: "Erreur serveur", error: err });
   }
 });
+
+router.get("/:name/accessible", async (req, res: any) => {
+  const name = req.params.name;
+  const { clerkUserId } = req.query;
+
+  if (typeof clerkUserId !== "string") {
+    return res.status(400).json({ error: "clerkUserId requis sous forme de chaîne" });
+  }
+
+  try {
+    const category = await prisma.category.findFirst({
+      where: { name },
+    });
+
+    if (!category) {
+      return res.status(404).json({ message: "Catégorie non trouvée" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur introuvable" });
+    }
+
+    const ressources = await prisma.ressource.findMany({
+      where: {
+        categoryId: category.id,
+        OR: [
+          {
+            ressourceType: {
+              name: {
+                equals: "Public",
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            userId: user.id,
+          },
+          {
+            sharedWithUsers: {
+              some: { userId: user.id },
+            },
+          },
+        ],
+      },
+      include: {
+        category: true,
+        ressourceType: true,
+        user: true,
+      },
+    });
+
+    return res.status(200).json({ data: ressources });
+  } catch (err) {
+    console.error("Erreur récupération ressources accessibles :", err);
+    return res.status(500).json({ message: "Erreur serveur", error: err });
+  }
+});
+
+
 
 
 export default router;

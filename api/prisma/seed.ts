@@ -16,7 +16,7 @@ async function main() {
     ],
   });
   await prisma.ressourceType.createMany({
-    data: [{ name: "Public" }, { name: "Privé" }, { name: "Partagé" }],
+    data: [{ name: "Public" }, { name: "Privé" }],
   });
 }
 main()

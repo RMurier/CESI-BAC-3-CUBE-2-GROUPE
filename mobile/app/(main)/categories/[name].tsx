@@ -8,17 +8,16 @@ import {
   StyleSheet,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "@clerk/clerk-expo";
 import { RessourceEntity } from "../../../types/ressources";
 
 const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-const capitalize = (s?: string) =>
-  s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
-
 const CategoryScreen = () => {
   const { name } = useLocalSearchParams<{ name: string }>();
   const router = useRouter();
+  const { userId } = useAuth();
+
   const [ressources, setRessources] = useState<RessourceEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,9 +27,15 @@ const CategoryScreen = () => {
 
     const fetchRessources = async () => {
       try {
-        const response = await fetch(
-          `${apiUrl}/categories/${encodeURIComponent(name)}/ressources`
-        );
+        setLoading(true);
+
+        const endpoint = userId
+          ? `${apiUrl}/categories/${encodeURIComponent(
+              name
+            )}/accessible?clerkUserId=${encodeURIComponent(userId)}`
+          : `${apiUrl}/categories/${encodeURIComponent(name)}/public`;
+
+        const response = await fetch(endpoint);
 
         if (!response.ok) {
           throw new Error(`Erreur HTTP: ${response.status}`);
@@ -47,7 +52,18 @@ const CategoryScreen = () => {
     };
 
     fetchRessources();
-  }, [name]);
+  }, [name, userId]);
+
+  const getTypeEmoji = (typeName?: string) => {
+    switch (typeName?.toLowerCase()) {
+      case "public":
+        return "🌐";
+      case "privé":
+        return "🔒";
+      default:
+        return "📄";
+    }
+  };
 
   if (loading) {
     return (
@@ -71,7 +87,6 @@ const CategoryScreen = () => {
 
   return (
     <View style={styles.wrapper}>
-
       <ScrollView contentContainerStyle={styles.container}>
         {ressources.length === 0 ? (
           <Text style={styles.message}>Aucune ressource trouvée.</Text>
@@ -82,7 +97,12 @@ const CategoryScreen = () => {
               style={styles.card}
               onPress={() => router.push(`/ressource/${ressource.id}`)}
             >
-              <Text style={styles.cardTitle}>{ressource.title}</Text>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>{ressource.title}</Text>
+                <Text style={styles.typeIcon}>
+                  {getTypeEmoji(ressource.ressourceType.name)}
+                </Text>
+              </View>
               <Text style={styles.cardDescription} numberOfLines={2}>
                 {ressource.description}
               </Text>
@@ -100,29 +120,6 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     backgroundColor: "#f9f9f9",
-  },
-  customHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingTop: 50,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  backButton: {
-    marginRight: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
   },
   container: {
     padding: 16,
@@ -155,11 +152,21 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
   cardTitle: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
-    marginBottom: 4,
+    flex: 1,
+  },
+  typeIcon: {
+    fontSize: 16,
+    marginLeft: 8,
   },
   cardDescription: {
     fontSize: 14,

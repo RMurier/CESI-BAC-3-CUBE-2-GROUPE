@@ -123,10 +123,9 @@ router.get("/:ressourceId", async (req, res) => {
 router.post<{}, any, RessourceEntity>("/", async (req, res) => {
   const { title, description, categoryId, isActive, ressourceTypeId, userId } =
     req.body;
-
   try {
     const category = await prisma.category.findFirst({
-      where: { id: categoryId },
+      where: { id: Number(categoryId) },
     });
 
     if (!category) {
@@ -144,7 +143,7 @@ router.post<{}, any, RessourceEntity>("/", async (req, res) => {
           connect: { id: ressourceTypeId },
         },
         category: {
-          connect: { id: categoryId },
+          connect: { id: Number(categoryId) },
         },
         isActive,
       },
@@ -199,7 +198,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 router.post("/:id/share", async (req : Request, res: any) => {
-  const { id } = req.params; // ressourceId
+  const { id } = req.params;
   const { userId } = req.body;
 
   if (!userId) {

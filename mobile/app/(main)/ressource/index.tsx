@@ -72,14 +72,12 @@ export default function ResourcesScreen() {
 
   useEffect(() => {
     if (filtersVisible) {
-      // Open the filters with a fade + expand animation
       Animated.timing(filtersHeight, {
         toValue: 1,
         duration: 200,
         useNativeDriver: false,
       }).start();
     } else {
-      // Close with fade then height animation
       Animated.timing(filtersHeight, {
         toValue: 0,
         duration: 150,
@@ -274,17 +272,14 @@ export default function ResourcesScreen() {
     item: RessourceEntity;
   };
   const renderItem = ({ item }: Props) => {
-    // Fonction pour déterminer l'icône selon le type
     const getTypeIcon = () => {
       switch (item.ressourceType.name?.toLowerCase()) {
         case "public":
-          return "🌐"; // Icône pour public
+          return "🌐";
         case "privé":
-          return "🔒"; // Icône pour privé
-        case "partagé":
-          return "👥"; // Icône pour partagé
+          return "🔒";
         default:
-          return "📄"; // Icône par défaut
+          return "📄";
       }
     };
 
