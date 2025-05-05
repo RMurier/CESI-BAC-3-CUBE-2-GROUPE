@@ -5,9 +5,9 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 export default function HomeLayout() {
   const { isSignedIn } = useAuth();
 
-  if (!isSignedIn) {
-    return <Redirect href={"/login"} />;
-  }
+  // if (!isSignedIn) {
+  //   return <Redirect href={"/login"} />;
+  // }
 
   return (
     <Tabs>
