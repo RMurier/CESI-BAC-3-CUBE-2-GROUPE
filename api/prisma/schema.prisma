@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String
+  users User[]
+}
+
+model User {
+  id          Int           @id @default(autoincrement())
+  clerkUserId String        @unique
+  email       String        @unique
+  name        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt()
+  comment     Comment[]
+  roleId      Int           @default(1)
+  role        Role          @relation(fields: [roleId], references: [id])
+  isActivated Boolean       @default(true)
+  Ressources  Ressource[]
+  likes       CommentLike[]
+  sharedRessources SharedRessource[]
+}
+
+model Category {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  isActive    Boolean     @default(true)
+  ressources  Ressource[]
+}
+
+model Ressource {
+  id              String        @id @default(uuid())
+  title           String
+  description     String
+  createdAt       DateTime      @default(now())
+  modifiedAt      DateTime      @default(now()) @updatedAt
+  isActive        Boolean       @default(true)
+  categoryId      Int
+  category        Category      @relation(fields: [categoryId], references: [id])
+  ressourceTypeId Int
+  ressourceType   RessourceType @relation(fields: [ressourceTypeId], references: [id])
+  comments        Comment[]
+  userId          Int
+  user            User          @relation(fields: [userId], references: [id])
+  sharedWithUsers SharedRessource[]
+}
+
+model RessourceType {
+  id         Int         @id @default(autoincrement())
+  name       String
+  isActive   Boolean     @default(true)
+  ressources Ressource[]
+}
+
+model Comment {
+  id          String    @id @default(uuid())
+  content     String
+  publishedAt DateTime  @default(now())
+  authorId    Int
+  author      User      @relation(fields: [authorId], references: [id])
+  ressourceId String
+  ressource   Ressource @relation(fields: [ressourceId], references: [id])
+
+  // Pour gérer les réponses aux commentaires
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies  Comment[] @relation("CommentReplies")
+
+  // Pour gérer les likes
+  likes CommentLike[]
+
+  @@index([ressourceId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+// Nouveau modèle pour les likes des commentaires
+model CommentLike {
+  id        String   @id @default(uuid())
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId]) // Un utilisateur ne peut liker qu'une seule fois un commentaire
+  @@index([userId])
+  @@index([commentId])
+}
+
+model SharedRessource {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ressourceId  String
+  ressource    Ressource @relation(fields: [ressourceId], references: [id], onDelete: Cascade)
+  sharedAt     DateTime  @default(now())
+
+  @@unique([userId, ressourceId]) // Un utilisateur ne peut recevoir la ressource qu'une fois
+  @@index([ressourceId])
+  @@index([userId])
+}

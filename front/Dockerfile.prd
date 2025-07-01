@@ -1,0 +1,13 @@
+FROM node:24-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm install --legacy-peer-deps
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 5172
+CMD ["npx", "serve", "dist", "-l", "80"]
