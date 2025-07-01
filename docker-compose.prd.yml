@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ressourcesrelationnelles
+      POSTGRES_PASSWORD: ressourcesrelationnellespass
+      POSTGRES_DB: ressourcesrelationnelles
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5431:5432"
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.prd
+    ports:
+      - "4000:3000"
+    environment:
+      DATABASE_URL: postgres://ressourcesrelationnelles:ressourcesrelationnellespass@postgres:5432/ressourcesrelationnelles
+    depends_on:
+      - postgres
+
+  admin:
+    build:
+      context: ./front
+      dockerfile: Dockerfile.prd
+      args:
+        VITE_API_BASE_ADDRESS: "http://54.87.120.225:4000"
+    environment:
+      - VITE_API_BASE_ADDRESS=http://54.87.120.225:4000
+    depends_on:
+      - api
+    ports:
+      - "5172:5173"
+
+  nginx:
+    image: nginx:stable
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prd.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs
+    depends_on:
+      - api
+      - admin
+
+volumes:
+  postgres_data:
