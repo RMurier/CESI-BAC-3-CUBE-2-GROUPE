@@ -136,4 +136,3 @@ jobs:
             cd ~/prd
             git pull origin master
             sudo docker compose -f docker-compose.prd.yml up -d --build
-            
