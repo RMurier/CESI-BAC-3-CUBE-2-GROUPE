@@ -10,8 +10,6 @@ const InitialLayout = () => {
 
   useEffect(() => {
     if (!isLoaded) return;
-  useEffect(() => {
-    if (!isLoaded) return;
 
     const inApp = segments[0]?.startsWith("(main)");
     const inTabsGroup = segments[0] === "(main)";
