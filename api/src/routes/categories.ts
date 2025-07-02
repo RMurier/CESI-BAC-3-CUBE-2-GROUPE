@@ -147,7 +147,7 @@ router.get("/:name/public", async (req, res: any) => {
         categoryId: category.id,
         ressourceType: {
           name: {
-            equals: "Public", // Attention à la casse dans la base
+            equals: "Public",
             mode: "insensitive",
           },
         },

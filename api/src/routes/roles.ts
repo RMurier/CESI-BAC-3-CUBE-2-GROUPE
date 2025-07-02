@@ -22,24 +22,24 @@ router.get(
 router.get("/:clerkId", async (req, res) => {
   try {
     const clerkId = req.params.clerkId;
+
     const user = await prisma.user.findFirst({
-      where: {
-        clerkUserId: clerkId,
-      },
+      where: { clerkUserId: clerkId },
     });
 
     if (!user) {
-      res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json({ user });
+    return res.status(200).json({ user });
   } catch (e) {
-    res
-      .status(500)
-      .json(
-        "Internal server error. Please contact an administrateur or IT service."
-      );
+    console.error(e);
+    return res.status(500).json({
+      error:
+        "Internal server error. Please contact an administrateur or IT service.",
+    });
   }
 });
+
 
 export default router;
