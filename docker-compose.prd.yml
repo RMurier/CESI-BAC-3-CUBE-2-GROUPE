@@ -42,7 +42,7 @@ services:
   nginx:
     image: nginx:stable
     ports:
-      - "80:80"
+      - "9000:80"
     volumes:
       - ./nginx/nginx.prd.conf:/etc/nginx/nginx.conf:ro
     depends_on:
