@@ -27,7 +27,7 @@ jobs:
 
       - name: Run API tests
         working-directory: api
-        run: npm test
+        run: npx jest
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
