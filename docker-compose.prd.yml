@@ -17,10 +17,12 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile.prd
+      args:
+        - DATABASE_URL=postgres://ressourcesrelationnelles:ressourcesrelationnellespass@postgres:5432/ressourcesrelationnelles
     ports:
       - "4000:3000"
     environment:
-      DATABASE_URL: postgres://ressourcesrelationnelles:ressourcesrelationnellespass@postgres:5431/ressourcesrelationnelles
+      - DATABASE_URL=postgres://ressourcesrelationnelles:ressourcesrelationnellespass@postgres:5432/ressourcesrelationnelles
     depends_on:
       - postgres
 
@@ -29,9 +31,9 @@ services:
       context: ./front
       dockerfile: Dockerfile.prd
       args:
-        VITE_API_BASE_ADDRESS: "http://54.87.120.225:4000"
+        - VITE_BASE_URL=http://54.87.120.225:4000
     environment:
-      - VITE_API_BASE_ADDRESS=http://54.87.120.225:4000
+      - VITE_BASE_URL=http://54.87.120.225:4000
     depends_on:
       - api
     ports:
