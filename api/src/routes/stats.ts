@@ -34,7 +34,7 @@ router.get("/resources-by-category", async (req, res) => {
       };
     });
 
-    res.status(200).json(formatted);
+    res.status(200).json({ success: true, data: formatted });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur." });
@@ -64,9 +64,12 @@ router.get("/resources-by-date", async (req, res) => {
       grouped[dateKey] = (grouped[dateKey] || 0) + 1;
     });
 
-    const data = Object.entries(grouped).map(([date, count]) => ({ date, count }));
+    const data = Object.entries(grouped).map(([date, count]) => ({
+      date,
+      count,
+    }));
 
-    res.status(200).json(data);
+    res.status(200).json({ success: true, data: data });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur." });
@@ -86,7 +89,7 @@ router.get("/user-count", async (req, res) => {
     }
 
     const count = await prisma.user.count({ where });
-    res.status(200).json({ count });
+    res.status(200).json({ success: true, data: count });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur." });

@@ -20,7 +20,7 @@ services:
     ports:
       - "4000:3000"
     environment:
-      DATABASE_URL: postgres://ressourcesrelationnelles:ressourcesrelationnellespass@postgres:5432/ressourcesrelationnelles
+      DATABASE_URL: postgres://ressourcesrelationnelles:ressourcesrelationnellespass@postgres:5431/ressourcesrelationnelles
     depends_on:
       - postgres
 

@@ -19,11 +19,7 @@ import {
   RessourceTypeEntity,
 } from "../../../types/ressources";
 import { CategoryEntity } from "../../../types/category";
-import {
-  getCategories,
-  getRessources,
-  getRessourceTypes,
-} from "../../../services/api";
+import { useApiWithAuth } from "../../../services/api";
 
 export default function ResourcesScreen() {
   const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -55,14 +51,35 @@ export default function ResourcesScreen() {
   const { isSignedIn, userId } = useAuth();
   const router = useRouter();
 
+  // Fonction pour supprimer les doublons basés sur le nom
+  const removeDuplicatesByName = <T extends { name: string }>(
+    items: T[]
+  ): T[] => {
+    const seen = new Set<string>();
+    return items.filter((item) => {
+      const normalizedName = item.name.toLowerCase().trim();
+      if (seen.has(normalizedName)) {
+        return false;
+      }
+      seen.add(normalizedName);
+      return true;
+    });
+  };
+  const { getCategories, getRessources, getRessourceTypes } = useApiWithAuth();
+
   useEffect(() => {
     if (isSignedIn) {
       Promise.all([fetchResources(), fetchResourceTypes(), fetchCategories()]);
     }
   }, [isSignedIn]);
+
   // Filter resources whenever search criteria changes
   useEffect(() => {
-    filterResources();
+    console.log("useEffect.resources");
+
+    if (resources) {
+      filterResources();
+    }
     let count = 0;
     if (searchText) count++;
     if (selectedType) count++;
@@ -89,28 +106,17 @@ export default function ResourcesScreen() {
   const fetchResources = async () => {
     try {
       setLoading(true);
-  
+
       let response;
-  
-      if (userId) {
-        response = await fetch(
-          `${apiUrl}/ressources/accessible?clerkUserId=${encodeURIComponent(userId)}`
-        );
-      } else {
-        response = await fetch(`${apiUrl}/ressources/public`);
-      }
-  
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
-      }
-  
-      const result = await response.json();
-      const resourcesList = result.data || ([] as RessourceEntity[]);
+
+      const resourcesList = await getRessources();
+
       setResources(resourcesList);
       setFilteredResources(resourcesList);
+      console.log("resources ", resources);
+
       setError("");
     } catch (err) {
-      console.error("Erreur lors de la récupération des ressources:", err);
       setError(
         "Impossible de charger les ressources. Veuillez réessayer plus tard."
       );
@@ -118,24 +124,27 @@ export default function ResourcesScreen() {
       setLoading(false);
     }
   };
-  
+
   const fetchResourceTypes = async () => {
     try {
       setTypesLoading(true);
 
       const result = await getRessourceTypes();
 
-      setAvailableTypes(result || []);
+      // Supprimer les doublons basés sur le nom
+      const uniqueTypes = removeDuplicatesByName(result || []);
+      setAvailableTypes(uniqueTypes);
     } catch (err) {
       console.error(
         "Erreur lors de la récupération des types de ressources:",
         err
       );
-      // Fallback to extracting from resources if API call fails
+
       const types = [
         ...new Set(resources.map((item) => item.ressourceType).filter(Boolean)),
       ];
-      setAvailableTypes(types);
+      const uniqueTypes = removeDuplicatesByName(types);
+      setAvailableTypes(uniqueTypes);
     } finally {
       setTypesLoading(false);
     }
@@ -146,14 +155,18 @@ export default function ResourcesScreen() {
       setCategoriesLoading(true);
 
       const result = await getCategories();
-      setAvailableCategories(result || []);
+
+      // Supprimer les doublons basés sur le nom
+      const uniqueCategories = removeDuplicatesByName(result || []);
+      setAvailableCategories(uniqueCategories);
     } catch (err) {
       console.error("Erreur lors de la récupération des catégories:", err);
       // Fallback to extracting from resources if API call fails
       const categories = [
         ...new Set(resources.map((item) => item.category).filter(Boolean)),
       ];
-      setAvailableCategories(categories);
+      const uniqueCategories = removeDuplicatesByName(categories);
+      setAvailableCategories(uniqueCategories);
     } finally {
       setCategoriesLoading(false);
     }
@@ -164,33 +177,42 @@ export default function ResourcesScreen() {
   };
 
   const filterResources = () => {
-    let results = [...resources];
+    console.log("filtering category...");
+    console.log("selectedCategory", selectedCategory);
 
-    // Filter by search text (resource name/title)
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      results = results.filter(
-        (item) =>
-          (item.title && item.title.toLowerCase().includes(searchLower)) ||
-          (item.description &&
-            item.description.toLowerCase().includes(searchLower))
-      );
-    }
+    if (resources) {
+      let results = [...resources];
+      console.log("results", results);
+      if (results) {
+        // Filter by search text (resource name/title)
+        if (searchText) {
+          const searchLower = searchText.toLowerCase();
+          results = results.filter(
+            (item) =>
+              (item.title && item.title.toLowerCase().includes(searchLower)) ||
+              (item.description &&
+                item.description.toLowerCase().includes(searchLower))
+          );
+        }
 
-    // Filter by resource type
-    if (selectedType) {
-      results = results.filter(
-        (item) => item.ressourceTypeId === selectedType.id
-      );
-    }
+        // Filter by resource type
+        if (selectedType) {
+          results = results.filter(
+            (item) => item.ressourceTypeId === selectedType.id
+          );
+        }
 
-    // Filter by category
-    if (selectedCategory) {
-      results = results.filter(
-        (item) => item.categoryId === selectedCategory.id
-      );
+        // Filter by category
+        if (selectedCategory) {
+          console.log("ok");
+
+          results = results.filter(
+            (item) => item.categoryId === selectedCategory.id
+          );
+        }
+        setFilteredResources(results);
+      }
     }
-    setFilteredResources(results);
   };
 
   const clearFilters = () => {
@@ -213,12 +235,13 @@ export default function ResourcesScreen() {
   };
 
   const renderFilterChip = (
+    id: string,
     label: string,
     isSelected: boolean,
     onPress: (event: GestureResponderEvent) => void
   ) => (
     <TouchableOpacity
-      key={label}
+      key={id}
       style={[styles.filterChip, isSelected && styles.filterChipSelected]}
       onPress={onPress}
     >
@@ -237,16 +260,25 @@ export default function ResourcesScreen() {
     <View style={styles.filterSection}>
       <Text style={styles.filterLabel}>Catégories:</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {renderFilterChip("Tous", selectedCategory?.name === "", () =>
-          setSelectedCategory(undefined)
+        {renderFilterChip(
+          "all-categories",
+          "Tous",
+          selectedCategory?.name === "",
+          () => setSelectedCategory(undefined)
         )}
+
         {availableCategories.map((category) =>
-          renderFilterChip(category.name, selectedCategory === category, () => {
-            setSelectedCategory(
-              selectedCategory === category ? undefined : category
-            );
-            filterResources();
-          })
+          renderFilterChip(
+            `category-${category.id}`,
+            category.name,
+            selectedCategory?.id === category.id,
+            () => {
+              setSelectedCategory(
+                selectedCategory?.id === category.id ? undefined : category
+              );
+              filterResources();
+            }
+          )
         )}
       </ScrollView>
     </View>
@@ -256,12 +288,17 @@ export default function ResourcesScreen() {
     <View style={styles.filterSection}>
       <Text style={styles.filterLabel}>Types:</Text>
       <View style={styles.chipContainer}>
-        {renderFilterChip("Tous", !selectedType, () =>
+        {renderFilterChip("all-types", "Tous", !selectedType, () =>
           setSelectedType(undefined)
         )}
+
         {availableTypes.map((type) =>
-          renderFilterChip(type.name, selectedType === type, () =>
-            setSelectedType(selectedType === type ? undefined : type)
+          renderFilterChip(
+            `type-${type.id}`,
+            type.name,
+            selectedType?.id === type.id,
+            () =>
+              setSelectedType(selectedType?.id === type.id ? undefined : type)
           )
         )}
       </View>
@@ -363,6 +400,7 @@ export default function ResourcesScreen() {
                 if (ressources) {
                   setResources(ressources);
                 }
+                console.log(1);
                 fetchResourceTypes();
                 fetchCategories();
               } catch (e) {

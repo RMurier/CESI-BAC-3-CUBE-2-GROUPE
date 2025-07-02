@@ -3,11 +3,12 @@ import prisma from "../utils/database";
 import { RessourceEntity } from "../types/ressources";
 import commentsRouter from "./comments";
 import { Ressource } from "@prisma/client";
+import { requireAuth } from "@clerk/express";
 
 const router = express.Router();
 router.use("/:ressourceId/comments", commentsRouter);
 
-router.get("/", async (req, res) => {
+router.get("/", requireAuth() ,async (req, res) => {
   try {
     const ressources = await prisma.ressource.findMany({
       include: {
@@ -16,7 +17,7 @@ router.get("/", async (req, res) => {
       },
     });
     if (ressources && ressources.length > 0)
-      res.status(200).json({ data: ressources });
+      res.status(200).json({ success: true, data: ressources });
     else res.status(404).json({ message: "No ressources found." });
   } catch (e) {
     res
@@ -27,48 +28,55 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/accessible", async (req: Request<{}, {}, {}, { clerkUserId?: string }>, res: any) => {
-  const { clerkUserId } = req.query;
+router.get(
+  "/accessible",
+  async (req: Request<{}, {}, {}, { clerkUserId?: string }>, res: any) => {
+    const { clerkUserId } = req.query;
 
-  if (!clerkUserId) {
-    return res.status(400).json({ error: "clerkUserId requis dans les paramètres." });
-  }
-
-  try {
-    const user = await prisma.user.findUnique({
-      where: { clerkUserId },
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: "Utilisateur introuvable." });
+    if (!clerkUserId) {
+      return res
+        .status(400)
+        .json({ error: "clerkUserId requis dans les paramètres." });
     }
 
-    const ressources: Ressource[] = await prisma.ressource.findMany({
-      where: {
-        OR: [
-          { ressourceType: { name: "Public" } },
-          { userId: user.id },
-          { sharedWithUsers: { some: { userId: user.id } } },
-        ],
-      },
-      include: {
-        category: true,
-        ressourceType: true,
-        user: {
-          select: { id: true, name: true },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    try {
+      const user = await prisma.user.findUnique({
+        where: { clerkUserId },
+      });
 
-    return res.status(200).json({ data: ressources });
-  } catch (error) {
-    console.error("Erreur récupération ressources accessibles :", error);
-    return res.status(500).json({ error: "Erreur interne du serveur", details: error });
+      if (!user) {
+        return res.status(404).json({ error: "Utilisateur introuvable." });
+      }
+
+      const ressources: Ressource[] = await prisma.ressource.findMany({
+        where: {
+          OR: [
+            { ressourceType: { name: "Public" } },
+            { userId: user.id },
+            { sharedWithUsers: { some: { userId: user.id } } },
+          ],
+        },
+        include: {
+          category: true,
+          ressourceType: true,
+          user: {
+            select: { id: true, name: true },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      return res.status(200).json({ success: true, data: ressources });
+    } catch (error) {
+      console.error("Erreur récupération ressources accessibles :", error);
+      return res
+        .status(500)
+        .json({ error: "Erreur interne du serveur", details: error });
+    }
   }
-});
+);
 
 router.get("/public", async (req, res) => {
   try {
@@ -90,13 +98,17 @@ router.get("/public", async (req, res) => {
       },
     });
 
-    res.status(200).json({ data: ressources });
+    res.status(200).json({ success: true, data: ressources });
   } catch (error) {
-    console.error("Erreur lors de la récupération des ressources publiques :", error);
-    res.status(500).json({ error: "Erreur serveur lors de la récupération des ressources publiques." });
+    console.error(
+      "Erreur lors de la récupération des ressources publiques :",
+      error
+    );
+    res.status(500).json({
+      error: "Erreur serveur lors de la récupération des ressources publiques.",
+    });
   }
 });
-
 
 router.get("/:ressourceId", async (req, res) => {
   try {
@@ -109,7 +121,7 @@ router.get("/:ressourceId", async (req, res) => {
         ressourceType: true,
       },
     });
-    if (ressource) res.status(200).json({ data: ressource });
+    if (ressource) res.status(200).json({ success: true, data: ressource });
     else res.status(404).json({ message: "Ressource not found." });
   } catch (e) {
     res
@@ -149,10 +161,12 @@ router.post<{}, any, RessourceEntity>("/", async (req, res) => {
       },
     });
 
-    res.status(201).json({ data: newRessource });
+    res.status(201).json({ success: true, data: newRessource });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "Internal server error", details: e });
+    res
+      .status(500)
+      .json({ success: false, error: "Internal server error", details: e });
   }
 });
 
@@ -165,7 +179,9 @@ router.delete("/:id", async (req, res) => {
       },
     });
 
-    res.status(200).json("Ressource supprimée avec succès.");
+    res
+      .status(200)
+      .json({ success: true, message: "Ressource supprimée avec succès." });
   } catch (e) {
     console.log(e);
     res.status(500).json("Internal server error");
@@ -190,14 +206,14 @@ router.patch("/:id", async (req, res) => {
       },
     });
 
-    res.status(200).json(updated);
+    res.status(200).json({ success: true, data: updated });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Erreur lors de la modification" });
   }
 });
 
-router.post("/:id/share", async (req : Request, res: any) => {
+router.post("/:id/share", async (req: Request, res: any) => {
   const { id } = req.params;
   const { userId } = req.body;
 
@@ -216,7 +232,9 @@ router.post("/:id/share", async (req : Request, res: any) => {
     });
 
     if (existing) {
-      return res.status(409).json({ error: "Déjà partagé avec cet utilisateur" });
+      return res
+        .status(409)
+        .json({ error: "Déjà partagé avec cet utilisateur" });
     }
 
     const shared = await prisma.sharedRessource.create({

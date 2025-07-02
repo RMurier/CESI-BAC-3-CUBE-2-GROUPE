@@ -1,32 +1,51 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Category } from "../interfaces/category";
+import { useAuthenticatedFetch } from "../hook/useAuthenticatedFetch";
 
 export const CategoriesPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+
   const [showModal, setShowModal] = useState(false);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
-  const [newCategory, setNewCategory] = useState<Category>({ description: "", name: "", id: null });
+  const [newCategory, setNewCategory] = useState<Category>({
+    description: "",
+    name: "",
+    id: null,
+  });
   const [errorModal, setErrorModal] = useState<string | null>(null);
   const [errorPopup, setErrorPopup] = useState<string | null>(null);
 
   const [nameFilter, setNameFilter] = useState("");
   const [descFilter, setDescFilter] = useState("");
+  const { authenticatedFetch, loading, isLoaded, isSignedIn } =
+    useAuthenticatedFetch();
 
-  const BASE_URL = import.meta.env.VITE_BASE_URL;
+  const fetchCategories = useCallback(async (): Promise<void> => {
+    if (!isLoaded) {
+      return;
+    }
 
-  const fetchCategories = async () => {
-    setLoading(true);
-    const res = await fetch(`${BASE_URL}/categories`);
-    const data = await res.json();
-    setCategories(data.data);
-    setLoading(false);
-  };
+    if (!isSignedIn) {
+      return;
+    }
+
+    try {
+      const data = await authenticatedFetch<Category[]>("/categories");
+
+      if (data?.data) {
+        setCategories(data.data);
+      } else {
+        console.log("⚠️ fetchCategories: Pas de données dans la réponse");
+      }
+    } catch (error) {
+      console.error("💥 fetchCategories: Erreur:", error);
+    }
+  }, [authenticatedFetch, isLoaded, isSignedIn]);
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [isLoaded]);
 
   useEffect(() => {
     let filtered = [...categories];
@@ -42,62 +61,73 @@ export const CategoriesPage = () => {
         cat.description.toLowerCase().includes(descFilter.toLowerCase())
       );
     }
-
     setFilteredCategories(filtered);
   }, [categories, nameFilter, descFilter]);
 
   const handleAddCategory = async () => {
     if (newCategory.description === "" || newCategory.name === "") {
-      setErrorModal("Merci de renseigner toutes les informations de la catégorie.");
+      setErrorModal(
+        "Merci de renseigner toutes les informations de la catégorie."
+      );
       return;
     } else {
       setErrorModal(null);
     }
 
-    const res = await fetch(`${BASE_URL}/categories`, {
+    const res = await authenticatedFetch(`/categories`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newCategory.name, description: newCategory.description }),
+      body: JSON.stringify({
+        name: newCategory.name,
+        description: newCategory.description,
+      }),
     });
 
-    if (res.ok) {
+    if (res?.data) {
+      await fetchCategories();
       setNewCategory({ description: "", name: "", id: null });
       setShowModal(false);
-      fetchCategories();
     }
   };
 
   const handleDeleteCategory = async (id: number) => {
-    const res = await fetch(`${BASE_URL}/categories/${id}`, {
+    const res = await authenticatedFetch(`/categories/${id}`, {
       method: "DELETE",
     });
-    if (res.ok) {
-      fetchCategories();
+
+    if (res?.message === "Catégorie supprimée avec succès.") {
+      await fetchCategories();
     } else {
-      const errorData = await res.json();
-      setErrorPopup(errorData.error || "Une erreur est survenue.");
+      const errorData = res?.message;
+      setErrorPopup(errorData || "Une erreur est survenue.");
       setTimeout(() => setErrorPopup(null), 5000);
     }
   };
 
   const handleUpdateCategory = async () => {
     if (!editCategory) return;
-    const res = await fetch(`${BASE_URL}/categories/${editCategory.id}`, {
-      method: "PATCH",
+    const res = await authenticatedFetch(`/categories/${editCategory.id}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editCategory.name, description: editCategory.description }),
+      body: JSON.stringify({
+        name: editCategory.name,
+        description: editCategory.description,
+      }),
     });
 
-    if (res.ok) {
+    if (res?.success) {
       setEditCategory(null);
-      fetchCategories();
+      await fetchCategories();
+    } else {
+      setErrorPopup(res?.message || "Erreur lors de la màj");
     }
   };
 
   if (loading) {
-    return <p className="text-center text-gray-500">Chargement des catégories...</p>;
+    return (
+      <p className="text-center text-gray-500">Chargement des catégories...</p>
+    );
   }
-
   return (
     <div className="p-6">
       {errorPopup && (
@@ -174,14 +204,21 @@ export const CategoriesPage = () => {
             <input
               type="text"
               value={newCategory.name}
-              onChange={(e) => setNewCategory((prev) => ({ ...prev, name: e.target.value }))}
+              onChange={(e) =>
+                setNewCategory((prev) => ({ ...prev, name: e.target.value }))
+              }
               placeholder="Nom de la catégorie"
               className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
             />
             <input
               type="text"
               value={newCategory.description}
-              onChange={(e) => setNewCategory((prev) => ({ ...prev, description: e.target.value }))}
+              onChange={(e) =>
+                setNewCategory((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
               placeholder="Description de la catégorie"
               className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
             />
@@ -199,7 +236,9 @@ export const CategoriesPage = () => {
                 Ajouter
               </button>
             </div>
-            {errorModal && <div className="text-red-600 mt-2">{errorModal}</div>}
+            {errorModal && (
+              <div className="text-red-600 mt-2">{errorModal}</div>
+            )}
           </div>
         </div>
       )}
@@ -211,14 +250,21 @@ export const CategoriesPage = () => {
             <input
               type="text"
               value={editCategory.name}
-              onChange={(e) => setEditCategory((prev) => ({ ...prev!, name: e.target.value }))}
+              onChange={(e) =>
+                setEditCategory((prev) => ({ ...prev!, name: e.target.value }))
+              }
               placeholder="Nom de la catégorie"
               className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
             />
             <input
               type="text"
               value={editCategory.description}
-              onChange={(e) => setEditCategory((prev) => ({ ...prev!, description: e.target.value }))}
+              onChange={(e) =>
+                setEditCategory((prev) => ({
+                  ...prev!,
+                  description: e.target.value,
+                }))
+              }
               placeholder="Description de la catégorie"
               className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
             />

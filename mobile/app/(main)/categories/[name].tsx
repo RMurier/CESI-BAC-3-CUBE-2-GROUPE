@@ -28,6 +28,7 @@ const CategoryScreen = () => {
     const fetchRessources = async () => {
       try {
         setLoading(true);
+        setError(null);
 
         const endpoint = userId
           ? `${apiUrl}/categories/${encodeURIComponent(
@@ -37,12 +38,18 @@ const CategoryScreen = () => {
 
         const response = await fetch(endpoint);
 
+        if (response.status === 404) {
+          setError("❌ Cette catégorie n'existe pas.");
+          return;
+        }
+
         if (!response.ok) {
+          console.log("Erreur HTTP:", response.status, response.statusText);
           throw new Error(`Erreur HTTP: ${response.status}`);
         }
 
         const result = await response.json();
-        setRessources(result.data || []);
+        setRessources(result.data ?? []);
       } catch (err) {
         console.error("Erreur lors du chargement des ressources :", err);
         setError("Impossible de charger les ressources.");
@@ -140,6 +147,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#d32f2f",
     marginBottom: 12,
+    textAlign: "center",
   },
   card: {
     backgroundColor: "#fff",

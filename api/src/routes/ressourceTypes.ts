@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
     const ressourceTypes = await prisma.ressourceType.findMany();
 
     if (ressourceTypes && ressourceTypes.length > 0)
-      res.status(200).json({ data: ressourceTypes });
+      res.status(200).json({ success: true, data: ressourceTypes });
     else res.status(404).json({ message: "No ressource types found." });
   } catch (e) {
     console.error(e);
@@ -32,7 +32,7 @@ router.get("/:ressourceTypeId", async (req, res) => {
     if (!ressourceType) {
       res.status(400).json({ error: "Ressource type not found" });
     } else {
-      res.status(200).json({ data: ressourceType });
+      res.status(200).json({ success: true, data: ressourceType });
     }
   } catch (e) {
     console.error(e);
@@ -52,7 +52,7 @@ router.post<{}, any, RessourceTypeEntity>(
         },
       });
 
-      res.status(201).json({ data: newRessourceType });
+      res.status(201).json({ success: true, data: newRessourceType });
     } catch (e) {
       console.error(e);
       res.status(500).json({ error: "Internal server error", details: e });
@@ -77,6 +77,7 @@ router.delete("/:ressourceTypeId", async (req, res) => {
     });
 
     res.status(204).json({
+      success: true,
       message: `Le type de ressource (id:${id}) a été supprimé avec succès.`,
     });
   } catch (e) {
@@ -98,10 +99,13 @@ router.put(
         data: { name, isActive },
       });
 
-      res.status(200).json({
-        message: `Le type de ressource ${id} a bien été mis-à-jour.`,
-        data: updatedRessourceType,
-      });
+      res
+        .status(200)
+        .json({
+          success: true,
+          message: `Le type de ressource ${id} a bien été mis-à-jour.`,
+          data: updatedRessourceType,
+        });
     } catch (e) {
       console.log(e);
       res.status(500).json({ error: "Internal server error", details: e });
