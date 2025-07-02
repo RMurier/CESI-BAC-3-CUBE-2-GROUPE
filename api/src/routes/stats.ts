@@ -1,9 +1,10 @@
 import express from "express";
 import prisma from "../utils/database";
+import { requireAuth } from "@clerk/express";
 
 const router = express.Router();
 
-router.get("/resources-by-category", async (req, res) => {
+router.get("/resources-by-category", requireAuth(), async (req, res) => {
   try {
     const { startDate, endDate, categoryId } = req.query;
 
@@ -34,14 +35,14 @@ router.get("/resources-by-category", async (req, res) => {
       };
     });
 
-    res.status(200).json(formatted);
+    res.status(200).json({ success: true, data: formatted });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur." });
   }
 });
 
-router.get("/resources-by-date", async (req, res) => {
+router.get("/resources-by-date", requireAuth(), async (req, res) => {
   try {
     const { startDate, endDate, categoryId } = req.query;
 
@@ -64,16 +65,19 @@ router.get("/resources-by-date", async (req, res) => {
       grouped[dateKey] = (grouped[dateKey] || 0) + 1;
     });
 
-    const data = Object.entries(grouped).map(([date, count]) => ({ date, count }));
+    const data = Object.entries(grouped).map(([date, count]) => ({
+      date,
+      count,
+    }));
 
-    res.status(200).json(data);
+    res.status(200).json({ success: true, data: data });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur." });
   }
 });
 
-router.get("/user-count", async (req, res) => {
+router.get("/user-count", requireAuth(), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
@@ -86,7 +90,7 @@ router.get("/user-count", async (req, res) => {
     }
 
     const count = await prisma.user.count({ where });
-    res.status(200).json({ count });
+    res.status(200).json({ success: true, data: count });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur." });

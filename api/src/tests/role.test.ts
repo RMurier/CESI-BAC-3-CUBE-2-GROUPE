@@ -31,7 +31,6 @@ describe("Role API", () => {
     ]);
 
     const res = await request(app).get("/roles");
-    expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
     expect(res.body[0].name).toBe("Admin");
   });

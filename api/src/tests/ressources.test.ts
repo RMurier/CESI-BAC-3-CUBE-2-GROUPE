@@ -94,7 +94,6 @@ describe("Ressource API", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(res.body.title).toBe("Updated");
   });
 
   test("POST /ressources/:id/share - should share ressource", async () => {

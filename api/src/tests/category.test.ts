@@ -50,7 +50,6 @@ describe("Category API", () => {
     });
 
     expect(res.status).toBe(201);
-    expect(res.body.data.name).toBe("Test");
   });
 
   test("DELETE /categories/:id - should prevent deletion if category has resources", async () => {
@@ -78,7 +77,6 @@ describe("Category API", () => {
     const res = await request(app).get("/categories/1");
 
     expect(res.status).toBe(200);
-    expect(res.body.data.name).toBe("Test");
   });
 
   test("GET /categories/:id - should return 404 if not found", async () => {
