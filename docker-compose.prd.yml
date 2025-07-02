@@ -44,7 +44,7 @@ services:
     ports:
       - "9000:80"
     volumes:
-      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.prd.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - api
       - admin
