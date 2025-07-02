@@ -85,6 +85,7 @@ const AddRessourcePage = () => {
     };
 
     fetchData();
+    console.log("ressourceTypes", ressourceTypes);
   }, []);
 
   const validateForm = () => {

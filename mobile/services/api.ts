@@ -73,6 +73,7 @@ export function useApiWithAuth() {
 
     try {
       const token = await getToken();
+      console.log("BASE_URL : ", BASE_URL);
 
       const headers = {
         "Content-Type": "application/json",
@@ -94,6 +95,8 @@ export function useApiWithAuth() {
       }
 
       const result = await response.json();
+      console.log("result : ", result.data);
+
       return result.data || [];
     } catch (error) {
       console.error(`Erreur lors de la requête à ${endpoint}:`, error);
@@ -131,19 +134,17 @@ export function useApiWithAuth() {
         }
 
         const dbUser = await authenticatedFetch(`/users/${user.id}`);
-
+        console.log("dbUser : ", dbUser);
         if (!dbUser) {
           return [];
         }
 
         const resourcesList = await authenticatedFetch("/ressources");
 
-        // Filtrer les ressources: type 1 ou celles appartenant à l'utilisateur
         return resourcesList.filter(
           (resource: RessourceEntity) =>
             resource.ressourceTypeId === 1 ||
-            (resource.ressourceTypeId !== 1 &&
-              resource.userId === dbUser.clerkUserId)
+            (resource.ressourceTypeId !== 1 && resource.userId === dbUser.id)
         );
       } catch (error) {
         console.error("Erreur lors de la récupération des ressources:", error);

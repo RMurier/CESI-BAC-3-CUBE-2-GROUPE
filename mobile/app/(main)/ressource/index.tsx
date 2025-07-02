@@ -57,9 +57,13 @@ export default function ResourcesScreen() {
       Promise.all([fetchResources(), fetchResourceTypes(), fetchCategories()]);
     }
   }, [isSignedIn]);
-  // Filter resources whenever search criteria changes
+
   useEffect(() => {
-    filterResources();
+    console.log("useEffect.resources");
+
+    if (resources) {
+      filterResources();
+    }
     let count = 0;
     if (searchText) count++;
     if (selectedType) count++;
@@ -89,24 +93,12 @@ export default function ResourcesScreen() {
 
       let response;
 
-      if (userId) {
-        response = await fetch(
-          `${apiUrl}/ressources/accessible?clerkUserId=${encodeURIComponent(
-            userId
-          )}`
-        );
-      } else {
-        response = await fetch(`${apiUrl}/ressources/public`);
-      }
+      const resourcesList = await getRessources();
 
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-      const resourcesList = result.data || ([] as RessourceEntity[]);
       setResources(resourcesList);
       setFilteredResources(resourcesList);
+      console.log("resources ", resources);
+
       setError("");
     } catch (err) {
       console.error("Erreur lors de la récupération des ressources:", err);
@@ -130,7 +122,7 @@ export default function ResourcesScreen() {
         "Erreur lors de la récupération des types de ressources:",
         err
       );
-      // Fallback to extracting from resources if API call fails
+
       const types = [
         ...new Set(resources.map((item) => item.ressourceType).filter(Boolean)),
       ];
@@ -163,33 +155,42 @@ export default function ResourcesScreen() {
   };
 
   const filterResources = () => {
-    let results = [...resources];
+    console.log("filtering category...");
+    console.log("selectedCategory", selectedCategory);
 
-    // Filter by search text (resource name/title)
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      results = results.filter(
-        (item) =>
-          (item.title && item.title.toLowerCase().includes(searchLower)) ||
-          (item.description &&
-            item.description.toLowerCase().includes(searchLower))
-      );
-    }
+    if (resources) {
+      let results = [...resources];
+      console.log("results", results);
+      if (results) {
+        // Filter by search text (resource name/title)
+        if (searchText) {
+          const searchLower = searchText.toLowerCase();
+          results = results.filter(
+            (item) =>
+              (item.title && item.title.toLowerCase().includes(searchLower)) ||
+              (item.description &&
+                item.description.toLowerCase().includes(searchLower))
+          );
+        }
 
-    // Filter by resource type
-    if (selectedType) {
-      results = results.filter(
-        (item) => item.ressourceTypeId === selectedType.id
-      );
-    }
+        // Filter by resource type
+        if (selectedType) {
+          results = results.filter(
+            (item) => item.ressourceTypeId === selectedType.id
+          );
+        }
 
-    // Filter by category
-    if (selectedCategory) {
-      results = results.filter(
-        (item) => item.categoryId === selectedCategory.id
-      );
+        // Filter by category
+        if (selectedCategory) {
+          console.log("ok");
+
+          results = results.filter(
+            (item) => item.categoryId === selectedCategory.id
+          );
+        }
+        setFilteredResources(results);
+      }
     }
-    setFilteredResources(results);
   };
 
   const clearFilters = () => {
@@ -212,14 +213,13 @@ export default function ResourcesScreen() {
   };
 
   const renderFilterChip = (
-    keyValue: string | number,
-    label: string,
     id: string,
+    label: string,
     isSelected: boolean,
     onPress: (event: GestureResponderEvent) => void
   ) => (
     <TouchableOpacity
-      key={label}
+      key={id}
       style={[styles.filterChip, isSelected && styles.filterChipSelected]}
       onPress={onPress}
     >
