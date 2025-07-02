@@ -3,11 +3,13 @@ import prisma from "../utils/database";
 import { Category } from "@prisma/client";
 import { TypedRequestBody } from "../types/express";
 import { CategoryEntity } from "../types/category";
+import { requireAuth } from "@clerk/express";
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
+    // console.log("Auth header:", req.headers.authorization);
     const categories = await prisma.category.findMany();
 
     res.status(200).json({ data: categories });
@@ -17,7 +19,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post<{}, any, Category>("/", async (req, res) => {
+router.post<{}, any, Category>("/", requireAuth(), async (req, res) => {
   try {
     const { name, description } = req.body;
 
@@ -35,7 +37,7 @@ router.post<{}, any, Category>("/", async (req, res) => {
   }
 });
 
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", requireAuth(), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { name, description } = req.body;
@@ -52,7 +54,7 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAuth(), async (req, res) => {
   const id = parseInt(req.params.id);
 
   if (isNaN(id)) {
@@ -74,7 +76,9 @@ router.delete("/:id", async (req, res) => {
 
     await prisma.category.delete({ where: { id } });
 
-    res.status(200).json({ message: "Catégorie supprimée avec succès." });
+    res
+      .status(200)
+      .json({ success: true, message: "Catégorie supprimée avec succès." });
   } catch (error) {
     console.error("Erreur lors de la suppression :", error);
     res.status(500).json({ error: "Erreur interne du serveur." });
@@ -83,6 +87,7 @@ router.delete("/:id", async (req, res) => {
 
 router.put(
   "/:ressourceTypeId",
+  requireAuth(),
   async (req: TypedRequestBody<CategoryEntity>, res) => {
     try {
       const id = parseInt(req.params.ressourceTypeId);
@@ -95,6 +100,7 @@ router.put(
       });
 
       res.status(200).json({
+        success: true,
         message: `La catégorie ${id} a bien été mise-à-jour.`,
         data: updatedCategory,
       });
@@ -105,7 +111,7 @@ router.put(
   }
 );
 
-router.get("/:categoryId", async (req, res) => {
+router.get("/:categoryId", requireAuth(), async (req, res) => {
   try {
     const id = parseInt(req.params.categoryId);
 
@@ -116,7 +122,7 @@ router.get("/:categoryId", async (req, res) => {
     if (!category) {
       res.status(404).json({ error: "Category not found" });
     } else {
-      res.status(200).json({ data: category });
+      res.status(200).json({ success: true, data: category });
     }
   } catch (e) {
     console.error(e);
@@ -152,7 +158,7 @@ router.get("/:name/public", async (req, res: any) => {
       },
     });
 
-    return res.status(200).json({ data: ressources });
+    return res.status(200).json({ success: true, data: ressources });
   } catch (err) {
     console.error("Erreur récupération ressources publiques :", err);
     return res.status(500).json({ message: "Erreur serveur", error: err });
@@ -164,7 +170,9 @@ router.get("/:name/accessible", async (req, res: any) => {
   const { clerkUserId } = req.query;
 
   if (typeof clerkUserId !== "string") {
-    return res.status(400).json({ error: "clerkUserId requis sous forme de chaîne" });
+    return res
+      .status(400)
+      .json({ error: "clerkUserId requis sous forme de chaîne" });
   }
 
   try {
@@ -213,14 +221,11 @@ router.get("/:name/accessible", async (req, res: any) => {
       },
     });
 
-    return res.status(200).json({ data: ressources });
+    return res.status(200).json({ success: true, data: ressources });
   } catch (err) {
     console.error("Erreur récupération ressources accessibles :", err);
     return res.status(500).json({ message: "Erreur serveur", error: err });
   }
 });
-
-
-
 
 export default router;

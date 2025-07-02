@@ -1,7 +1,16 @@
-import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { useCallback, useEffect, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
+import { useAuthenticatedFetch } from "../hook/useAuthenticatedFetch";
 
 interface StatByCategory {
   category: string;
@@ -14,44 +23,62 @@ interface StatByDate {
 }
 
 export const StatsPage = () => {
-  const [resourcesByCategory, setResourcesByCategory] = useState<StatByCategory[]>([]);
+  const [resourcesByCategory, setResourcesByCategory] = useState<
+    StatByCategory[]
+  >([]);
   const [resourcesByDate, setResourcesByDate] = useState<StatByDate[]>([]);
   const [userCount, setUserCount] = useState<number>(0);
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+    []
+  );
+  const { authenticatedFetch, loading, isLoaded, isSignedIn } =
+    useAuthenticatedFetch();
 
-  const BASE_URL = import.meta.env.VITE_BASE_URL;
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     const params = new URLSearchParams();
     if (startDate) params.append("startDate", startDate);
     if (endDate) params.append("endDate", endDate);
     if (categoryId) params.append("categoryId", categoryId);
 
-    const [catRes, dateRes, userRes, catListRes] = await Promise.all([
-      fetch(`${BASE_URL}/stats/resources-by-category?${params.toString()}`),
-      fetch(`${BASE_URL}/stats/resources-by-date?${params.toString()}`),
-      fetch(`${BASE_URL}/stats/user-count?${params.toString()}`),
-      fetch(`${BASE_URL}/categories`)
-    ]);
+    const catRes = await authenticatedFetch(
+      `/stats/resources-by-category?${params.toString()}`
+    );
+    const dateRes = await authenticatedFetch(
+      `/stats/resources-by-date?${params.toString()}`
+    );
+    const userRes = await authenticatedFetch(
+      `/stats/user-count?${params.toString()}`
+    );
+    const catListRes = await authenticatedFetch(`/categories`);
 
-    const catData = await catRes.json();
-    const dateData = await dateRes.json();
-    const userData = await userRes.json();
-    const catList = await catListRes.json();
-
-    setResourcesByCategory(catData.data);
-    setResourcesByDate(dateData.data);
-    setUserCount(userData.count);
-    setCategories(catList.data);
-  };
+    const catData = await catRes?.data;
+    const dateData = await dateRes?.data;
+    const userData = await userRes?.data;
+    const catList = await catListRes?.data;
+    console.log("catData: ", catData);
+    console.log("dateRes: ", dateRes);
+    setResourcesByCategory(catData);
+    setResourcesByDate(dateData);
+    setUserCount(userData);
+    setCategories(catList);
+    console.log("date filtered : ", dateData);
+    console.log("user count : ", userCount);
+  }, [authenticatedFetch, isLoaded, isSignedIn]);
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [isLoaded, startDate, endDate, categoryId]);
+
+  useEffect(() => {}, [
+    resourcesByCategory,
+    resourcesByDate,
+    userCount,
+    categories,
+  ]);
 
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
@@ -63,6 +90,10 @@ export const StatsPage = () => {
     const file = new Blob([buffer], { type: "application/octet-stream" });
     saveAs(file, "statistiques.xlsx");
   };
+
+  if (loading) {
+    return <p className="text-center text-gray-500">Chargement...</p>;
+  }
 
   return (
     <div className="p-6 space-y-8">
@@ -88,7 +119,9 @@ export const StatsPage = () => {
         >
           <option value="">Toutes les catégories</option>
           {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
           ))}
         </select>
         <button
@@ -123,7 +156,9 @@ export const StatsPage = () => {
       </div>
 
       <div className="w-full h-80">
-        <h2 className="text-xl font-semibold mb-2">Ressources par date de création</h2>
+        <h2 className="text-xl font-semibold mb-2">
+          Ressources par date de création
+        </h2>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={resourcesByDate}>
             <CartesianGrid strokeDasharray="3 3" />

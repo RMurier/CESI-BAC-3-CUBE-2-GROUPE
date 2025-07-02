@@ -18,7 +18,7 @@ router.get("/", async (req, res) => {
       include: { author: true },
     });
 
-    res.status(200).json({ data: comments });
+    res.status(200).json({ success: true, data: comments });
   } catch (e) {
     console.log(e);
     res.status(500).json({ error: "Internal server error", details: e });
@@ -38,10 +38,12 @@ router.get("/:commentId", async (req, res) => {
       res
         .status(404)
         .json({ message: `Le commentaire (id:${id}) est introuvable.` });
-    else res.status(200).json({ data: comment });
+    else res.status(200).json({ success: true, data: comment });
   } catch (e) {
     console.log(e);
-    res.status(500).json({ error: "Internal server error", details: e });
+    res
+      .status(500)
+      .json({ success: false, error: "Internal server error", details: e });
   }
 });
 
@@ -69,7 +71,7 @@ router.post("/", async (req: TypedRequestBody<CommentEntity>, res) => {
     }
     const newComment = await prisma.comment.create({ data });
 
-    res.status(200).json({ data: newComment });
+    res.status(200).json({ success: true, data: newComment });
   } catch (e) {
     console.log(e);
     res.status(500).json({ error: "Internal server error", details: e });
@@ -87,6 +89,7 @@ router.delete("/:commentId", async (req, res) => {
     });
 
     res.status(204).json({
+      success: true,
       message: `Le commentaire (id:${id}) a été supprimé avec succès.`,
     });
   } catch (e) {
@@ -119,6 +122,7 @@ router.put("/:commentId", async (req: TypedRequestBody<CommentEntity>, res) => {
     });
 
     res.status(200).json({
+      success: true,
       message: `Le commentaire (id:${id}) a bien été mise-à-jour.`,
       data: updatedComment,
     });
@@ -183,6 +187,7 @@ router.post(
         });
 
         res.status(200).json({
+          success: true,
           liked: false,
           message: "Comment unliked successfully",
         });
@@ -196,6 +201,7 @@ router.post(
         });
 
         res.status(201).json({
+          success: true,
           liked: true,
           message: "Comment liked successfully",
         });
@@ -203,6 +209,7 @@ router.post(
     } catch (error: any) {
       console.error("Error toggling comment like:", error);
       res.status(500).json({
+        success: false,
         message: "Failed to process like operation",
         error: error.message,
       });
@@ -220,13 +227,16 @@ router.get(
         where: { commentId },
       });
 
-      res.status(200).json({ count: likesCount });
+      res.status(200).json({ success: true, count: likesCount });
     } catch (error: any) {
       console.error("Error getting comment likes count:", error);
-      res.status(500).json({
-        message: "Failed to get likes count",
-        error: error.message,
-      });
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: "Failed to get likes count",
+          error: error.message,
+        });
     }
   }
 );

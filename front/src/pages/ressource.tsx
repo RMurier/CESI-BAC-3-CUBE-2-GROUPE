@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Ressource } from "../interfaces/ressource";
 import { Category } from "../interfaces/category";
+import { useAuthenticatedFetch } from "../hook/useAuthenticatedFetch";
+import { useAuth } from "@clerk/clerk-react";
 
 export const RessourcesPage = () => {
   const [ressources, setRessources] = useState<Ressource[]>([]);
@@ -8,7 +10,6 @@ export const RessourcesPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [titleFilter, setTitleFilter] = useState("");
   const [descFilter, setDescFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<number | "">("");
@@ -17,25 +18,51 @@ export const RessourcesPage = () => {
     title: "",
     description: "",
     categoryId: 0,
-    isActive: true
+    isActive: true,
+    userClerkId: "",
   });
-
+  const { userId } = useAuth();
   const [editRessource, setEditRessource] = useState<Ressource | null>(null);
 
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-  const fetchData = async () => {
-    setLoading(true);
-    const [resR, resC] = await Promise.all([
-      fetch(`${BASE_URL}/ressources`),
-      fetch(`${BASE_URL}/categories`),
-    ]);
-    const ressourcesData = await resR.json();
-    const categoriesData = await resC.json();
-    setRessources(ressourcesData.data);
-    setCategories(categoriesData.data);
-    setLoading(false);
-  };
+  const { authenticatedFetch, loading, isLoaded, isSignedIn } =
+    useAuthenticatedFetch();
+
+  const fetchData = useCallback(async (): Promise<void> => {
+    if (!isLoaded) {
+      return;
+    }
+
+    if (!isSignedIn) {
+      return;
+    }
+
+    try {
+      const dataCategories = await authenticatedFetch<Category[]>(
+        "/categories"
+      );
+      if (dataCategories?.data) {
+        setCategories(dataCategories.data);
+      } else {
+        console.log("⚠️ fetchCategories: Pas de données dans la réponse");
+      }
+    } catch (error) {
+      console.error("💥 fetchCategories: Erreur:", error);
+    }
+    try {
+      const dataRessource = await authenticatedFetch<Ressource[]>(
+        "/ressources"
+      );
+      if (dataRessource?.success) {
+        setRessources(dataRessource.data);
+      } else {
+        console.log("⚠️ fetchRessources: Pas de données dans la réponse");
+      }
+    } catch (error) {
+      console.error("💥 fetchRessources: Erreur:", error);
+    }
+  }, [authenticatedFetch, isLoaded, isSignedIn]);
 
   const handleCreate = async () => {
     if (newRessource.categoryId === 0) {
@@ -43,16 +70,23 @@ export const RessourcesPage = () => {
       return;
     }
 
-    const res = await fetch(`${BASE_URL}/ressources`, {
+    const res = await authenticatedFetch(`/ressources`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newRessource),
     });
+    console.log("OKJAZEOIAZJIEOIAZ : ", res);
 
-    if (res.ok) {
-      setNewRessource({ title: "", description: "", categoryId: 0, isActive: true });
+    if (res?.success) {
+      setNewRessource({
+        title: "",
+        description: "",
+        categoryId: 0,
+        isActive: true,
+        userClerkId: userId ?? "",
+      });
+      await fetchData();
       setShowModal(false);
-      fetchData();
     }
   };
 
@@ -73,16 +107,16 @@ export const RessourcesPage = () => {
 
   const deleteRessource = async (id: string) => {
     const res = await fetch(`${BASE_URL}/ressources/${id}`, {
-      method: "DELETE"
+      method: "DELETE",
     });
-    if(res.ok) {
+    if (res.ok) {
       fetchData();
     }
-  }
+  };
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [isLoaded]);
 
   useEffect(() => {
     let filtered = [...ressources];
@@ -100,7 +134,9 @@ export const RessourcesPage = () => {
     }
 
     if (categoryFilter !== "") {
-      filtered = filtered.filter((r) => r.categoryId === Number(categoryFilter));
+      filtered = filtered.filter(
+        (r) => r.categoryId === Number(categoryFilter)
+      );
     }
 
     setFilteredRessources(filtered);
@@ -139,12 +175,16 @@ export const RessourcesPage = () => {
         />
         <select
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value ? Number(e.target.value) : "")}
+          onChange={(e) =>
+            setCategoryFilter(e.target.value ? Number(e.target.value) : "")
+          }
           className="border rounded px-3 py-2"
         >
           <option value="">Toutes les catégories</option>
           {categories.map((cat) => (
-            <option key={cat.id!} value={cat.id!}>{cat.name}</option>
+            <option key={cat.id!} value={cat.id!}>
+              {cat.name}
+            </option>
           ))}
         </select>
       </div>
@@ -166,7 +206,9 @@ export const RessourcesPage = () => {
               <td className="p-3">{r.title}</td>
               <td className="p-3">{r.description}</td>
               <td className="p-3">{r.category?.name ?? "—"}</td>
-              <td className="p-3">{new Date(r.createdAt).toLocaleDateString()}</td>
+              <td className="p-3">
+                {new Date(r.createdAt).toLocaleDateString()}
+              </td>
               <td>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -220,7 +262,10 @@ export const RessourcesPage = () => {
               placeholder="Description"
               value={newRessource.description}
               onChange={(e) =>
-                setNewRessource((prev) => ({ ...prev, description: e.target.value }))
+                setNewRessource((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
               }
               className="w-full border rounded px-3 py-2 mb-3"
             />
@@ -230,13 +275,18 @@ export const RessourcesPage = () => {
                 type="checkbox"
                 checked={newRessource.isActive}
                 onChange={(e) =>
-                  setNewRessource((prev) => ({ ...prev, isActive: e.target.checked }))
+                  setNewRessource((prev) => ({
+                    ...prev,
+                    isActive: e.target.checked,
+                  }))
                 }
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
-              <p className="ml-2">{newRessource.isActive ? "Actif" : "Inactif"}</p>
+              <p className="ml-2">
+                {newRessource.isActive ? "Actif" : "Inactif"}
+              </p>
             </label>
 
             <select
@@ -288,7 +338,10 @@ export const RessourcesPage = () => {
               type="text"
               value={editRessource.title}
               onChange={(e) =>
-                setEditRessource((prev) => ({ ...prev!, title: e.target.value }))
+                setEditRessource((prev) => ({
+                  ...prev!,
+                  title: e.target.value,
+                }))
               }
               className="w-full border rounded px-3 py-2 mb-3"
               placeholder="Titre"
@@ -297,7 +350,10 @@ export const RessourcesPage = () => {
             <textarea
               value={editRessource.description}
               onChange={(e) =>
-                setEditRessource((prev) => ({ ...prev!, description: e.target.value }))
+                setEditRessource((prev) => ({
+                  ...prev!,
+                  description: e.target.value,
+                }))
               }
               className="w-full border rounded px-3 py-2 mb-3"
               placeholder="Description"
@@ -308,19 +364,27 @@ export const RessourcesPage = () => {
                 type="checkbox"
                 checked={editRessource.isActive}
                 onChange={(e) =>
-                  setEditRessource((prev) => ({ ...prev!, isActive: e.target.checked }))
+                  setEditRessource((prev) => ({
+                    ...prev!,
+                    isActive: e.target.checked,
+                  }))
                 }
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
-              <p className="ml-2">{editRessource.isActive ? "Actif" : "Inactif"}</p>
+              <p className="ml-2">
+                {editRessource.isActive ? "Actif" : "Inactif"}
+              </p>
             </label>
 
             <select
               value={editRessource.categoryId ?? 0}
               onChange={(e) =>
-                setEditRessource((prev) => ({ ...prev!, categoryId: Number(e.target.value) }))
+                setEditRessource((prev) => ({
+                  ...prev!,
+                  categoryId: Number(e.target.value),
+                }))
               }
               className="w-full border rounded px-3 py-2 mb-4"
             >
