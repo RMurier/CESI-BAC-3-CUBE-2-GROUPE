@@ -45,7 +45,7 @@ services:
       - "9000:80"
     volumes:
       - ./nginx/nginx.prd.conf:/etc/nginx/nginx.conf:ro
-y    depends_on:
+    depends_on:
       - api
       - admin
 
