@@ -3,11 +3,12 @@ import prisma from "../utils/database";
 import { RessourceEntity } from "../types/ressources";
 import commentsRouter from "./comments";
 import { Ressource } from "@prisma/client";
+import { requireAuth } from "@clerk/express";
 
 const router = express.Router();
 router.use("/:ressourceId/comments", commentsRouter);
 
-router.get("/", async (req, res) => {
+router.get("/", requireAuth() ,async (req, res) => {
   try {
     const ressources = await prisma.ressource.findMany({
       include: {
