@@ -10,4 +10,4 @@ COPY . .
 RUN npm run build
 
 EXPOSE 5173
-CMD ["npx", "serve", "dist", "-l", "80"]
+CMD ["npm", "run", "dev"]
