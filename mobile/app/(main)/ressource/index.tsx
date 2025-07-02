@@ -19,11 +19,7 @@ import {
   RessourceTypeEntity,
 } from "../../../types/ressources";
 import { CategoryEntity } from "../../../types/category";
-import {
-  getCategories,
-  getRessources,
-  getRessourceTypes,
-} from "../../../services/api";
+import { useApiWithAuth } from "../../../services/api";
 
 export default function ResourcesScreen() {
   const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -54,6 +50,7 @@ export default function ResourcesScreen() {
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const { isSignedIn, userId } = useAuth();
   const router = useRouter();
+  const { getCategories, getRessources, getRessourceTypes } = useApiWithAuth();
 
   useEffect(() => {
     if (isSignedIn) {
@@ -89,21 +86,23 @@ export default function ResourcesScreen() {
   const fetchResources = async () => {
     try {
       setLoading(true);
-  
+
       let response;
-  
+
       if (userId) {
         response = await fetch(
-          `${apiUrl}/ressources/accessible?clerkUserId=${encodeURIComponent(userId)}`
+          `${apiUrl}/ressources/accessible?clerkUserId=${encodeURIComponent(
+            userId
+          )}`
         );
       } else {
         response = await fetch(`${apiUrl}/ressources/public`);
       }
-  
+
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
-  
+
       const result = await response.json();
       const resourcesList = result.data || ([] as RessourceEntity[]);
       setResources(resourcesList);
@@ -118,7 +117,7 @@ export default function ResourcesScreen() {
       setLoading(false);
     }
   };
-  
+
   const fetchResourceTypes = async () => {
     try {
       setTypesLoading(true);
@@ -214,6 +213,7 @@ export default function ResourcesScreen() {
 
   const renderFilterChip = (
     label: string,
+    id: string,
     isSelected: boolean,
     onPress: (event: GestureResponderEvent) => void
   ) => (
@@ -237,16 +237,21 @@ export default function ResourcesScreen() {
     <View style={styles.filterSection}>
       <Text style={styles.filterLabel}>Catégories:</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {renderFilterChip("Tous", selectedCategory?.name === "", () =>
+        {renderFilterChip("Tous", "-1", selectedCategory?.name === "", () =>
           setSelectedCategory(undefined)
         )}
         {availableCategories.map((category) =>
-          renderFilterChip(category.name, selectedCategory === category, () => {
-            setSelectedCategory(
-              selectedCategory === category ? undefined : category
-            );
-            filterResources();
-          })
+          renderFilterChip(
+            category.name,
+            category.id.toString(),
+            selectedCategory === category,
+            () => {
+              setSelectedCategory(
+                selectedCategory === category ? undefined : category
+              );
+              filterResources();
+            }
+          )
         )}
       </ScrollView>
     </View>
@@ -256,12 +261,15 @@ export default function ResourcesScreen() {
     <View style={styles.filterSection}>
       <Text style={styles.filterLabel}>Types:</Text>
       <View style={styles.chipContainer}>
-        {renderFilterChip("Tous", !selectedType, () =>
+        {renderFilterChip("Tous", "all", !selectedType, () =>
           setSelectedType(undefined)
         )}
         {availableTypes.map((type) =>
-          renderFilterChip(type.name, selectedType === type, () =>
-            setSelectedType(selectedType === type ? undefined : type)
+          renderFilterChip(
+            type.name,
+            type.id.toString(),
+            selectedType === type,
+            () => setSelectedType(selectedType === type ? undefined : type)
           )
         )}
       </View>
