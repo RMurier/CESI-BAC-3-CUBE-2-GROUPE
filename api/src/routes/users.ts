@@ -2,7 +2,6 @@ import express from "express";
 import prisma from "../utils/database";
 import { User } from "@prisma/client";
 import { createUser } from "../controllers/userController";
-import { requireAuth } from "@clerk/express";
 
 const router = express.Router();
 
@@ -26,7 +25,7 @@ router.patch("/role/:id", async (req, res) => {
   }
 });
 
-router.patch("/desactivate/:id", requireAuth(), async (req, res) => {
+router.patch("/desactivate/:id", async (req, res) => {
   const userId = await req.params.id;
   const isActivated = await req.body.isActivated;
   try {
@@ -46,7 +45,7 @@ router.patch("/desactivate/:id", requireAuth(), async (req, res) => {
   }
 });
 
-router.get("/", requireAuth(), async (req, res) => {
+router.get("/", async (req, res) => {
   console.log("Route called:", req.method, req.url);
 
   try {
@@ -72,7 +71,7 @@ router.get("/", requireAuth(), async (req, res) => {
   }
 });
 
-router.get("/:clerkId", requireAuth(), async (req, res) => {
+router.get("/:clerkId", async (req, res) => {
   const id = req.params.clerkId;
 
   try {

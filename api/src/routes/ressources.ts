@@ -3,7 +3,6 @@ import prisma from "../utils/database";
 import { RessourceEntity } from "../types/ressources";
 import commentsRouter from "./comments";
 import { Ressource } from "@prisma/client";
-import { requireAuth } from "@clerk/express";
 
 const router = express.Router();
 router.use("/:ressourceId/comments", commentsRouter);
@@ -132,7 +131,7 @@ router.get("/:ressourceId", async (req, res) => {
   }
 });
 
-router.post<{}, any, RessourceEntity>("/", requireAuth(), async (req, res) => {
+router.post<{}, any, RessourceEntity>("/", async (req, res) => {
   const { title, description, categoryId, isActive, ressourceTypeId, userId } =
     req.body;
   try {
@@ -170,7 +169,7 @@ router.post<{}, any, RessourceEntity>("/", requireAuth(), async (req, res) => {
   }
 });
 
-router.delete("/:id", requireAuth(), async (req, res) => {
+router.delete("/:id", async (req, res) => {
   const id = req.params.id;
   try {
     await prisma.ressource.delete({

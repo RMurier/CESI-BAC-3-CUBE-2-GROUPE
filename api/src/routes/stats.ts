@@ -1,10 +1,9 @@
 import express from "express";
 import prisma from "../utils/database";
-import { requireAuth } from "@clerk/express";
 
 const router = express.Router();
 
-router.get("/resources-by-category", requireAuth(), async (req, res) => {
+router.get("/resources-by-category", async (req, res) => {
   try {
     const { startDate, endDate, categoryId } = req.query;
 
@@ -42,7 +41,7 @@ router.get("/resources-by-category", requireAuth(), async (req, res) => {
   }
 });
 
-router.get("/resources-by-date", requireAuth(), async (req, res) => {
+router.get("/resources-by-date", async (req, res) => {
   try {
     const { startDate, endDate, categoryId } = req.query;
 
@@ -77,7 +76,7 @@ router.get("/resources-by-date", requireAuth(), async (req, res) => {
   }
 });
 
-router.get("/user-count", requireAuth(), async (req, res) => {
+router.get("/user-count", async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 

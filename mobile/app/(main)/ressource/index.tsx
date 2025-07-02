@@ -55,11 +55,25 @@ export default function ResourcesScreen() {
   const { isSignedIn, userId } = useAuth();
   const router = useRouter();
 
+  // Fonction pour supprimer les doublons basés sur le nom
+  const removeDuplicatesByName = <T extends { name: string }>(items: T[]): T[] => {
+    const seen = new Set<string>();
+    return items.filter(item => {
+      const normalizedName = item.name.toLowerCase().trim();
+      if (seen.has(normalizedName)) {
+        return false;
+      }
+      seen.add(normalizedName);
+      return true;
+    });
+  };
+
   useEffect(() => {
     if (isSignedIn) {
       Promise.all([fetchResources(), fetchResourceTypes(), fetchCategories()]);
     }
   }, [isSignedIn]);
+  
   // Filter resources whenever search criteria changes
   useEffect(() => {
     filterResources();
@@ -103,16 +117,19 @@ export default function ResourcesScreen() {
       }
 
       if (!response.ok) {
+        if(response.status === 404){
+          setError("Aucune ressource trouvée.");
+          return
+        }
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
       const result = await response.json();
-      const resourcesList = result.data || ([] as RessourceEntity[]);
+      const resourcesList = result.data ?? ([] as RessourceEntity[]);
       setResources(resourcesList);
       setFilteredResources(resourcesList);
       setError("");
     } catch (err) {
-      console.error("Erreur lors de la récupération des ressources:", err);
       setError(
         "Impossible de charger les ressources. Veuillez réessayer plus tard."
       );
@@ -126,8 +143,10 @@ export default function ResourcesScreen() {
       setTypesLoading(true);
 
       const result = await getRessourceTypes();
-
-      setAvailableTypes(result || []);
+      
+      // Supprimer les doublons basés sur le nom
+      const uniqueTypes = removeDuplicatesByName(result || []);
+      setAvailableTypes(uniqueTypes);
     } catch (err) {
       console.error(
         "Erreur lors de la récupération des types de ressources:",
@@ -137,7 +156,8 @@ export default function ResourcesScreen() {
       const types = [
         ...new Set(resources.map((item) => item.ressourceType).filter(Boolean)),
       ];
-      setAvailableTypes(types);
+      const uniqueTypes = removeDuplicatesByName(types);
+      setAvailableTypes(uniqueTypes);
     } finally {
       setTypesLoading(false);
     }
@@ -148,14 +168,18 @@ export default function ResourcesScreen() {
       setCategoriesLoading(true);
 
       const result = await getCategories();
-      setAvailableCategories(result || []);
+      
+      // Supprimer les doublons basés sur le nom
+      const uniqueCategories = removeDuplicatesByName(result || []);
+      setAvailableCategories(uniqueCategories);
     } catch (err) {
-      alert("Erreur lors de la récupération des catégories:");
+      console.error("Erreur lors de la récupération des catégories:", err);
       // Fallback to extracting from resources if API call fails
       const categories = [
         ...new Set(resources.map((item) => item.category).filter(Boolean)),
       ];
-      setAvailableCategories(categories);
+      const uniqueCategories = removeDuplicatesByName(categories);
+      setAvailableCategories(uniqueCategories);
     } finally {
       setCategoriesLoading(false);
     }
@@ -380,11 +404,8 @@ export default function ResourcesScreen() {
                 if (ressources) {
                   setResources(ressources);
                 }
-                console.log(1)
                 fetchResourceTypes();
-                console.log(2)
                 fetchCategories();
-                console.log(3)
               } catch (e) {
                 console.log(e);
                 setError(

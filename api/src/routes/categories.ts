@@ -3,13 +3,11 @@ import prisma from "../utils/database";
 import { Category } from "@prisma/client";
 import { TypedRequestBody } from "../types/express";
 import { CategoryEntity } from "../types/category";
-import { requireAuth } from "@clerk/express";
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    // console.log("Auth header:", req.headers.authorization);
     const categories = await prisma.category.findMany();
 
     res.status(200).json({ data: categories });
@@ -19,7 +17,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post<{}, any, Category>("/", requireAuth(), async (req, res) => {
+router.post<{}, any, Category>("/", async (req, res) => {
   try {
     const { name, description } = req.body;
 
@@ -37,7 +35,7 @@ router.post<{}, any, Category>("/", requireAuth(), async (req, res) => {
   }
 });
 
-router.patch("/:id", requireAuth(), async (req, res) => {
+router.patch("/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { name, description } = req.body;
@@ -54,7 +52,7 @@ router.patch("/:id", requireAuth(), async (req, res) => {
   }
 });
 
-router.delete("/:id", requireAuth(), async (req, res) => {
+router.delete("/:id", async (req, res) => {
   const id = parseInt(req.params.id);
 
   if (isNaN(id)) {
@@ -87,7 +85,6 @@ router.delete("/:id", requireAuth(), async (req, res) => {
 
 router.put(
   "/:ressourceTypeId",
-  requireAuth(),
   async (req: TypedRequestBody<CategoryEntity>, res) => {
     try {
       const id = parseInt(req.params.ressourceTypeId);
@@ -111,7 +108,7 @@ router.put(
   }
 );
 
-router.get("/:categoryId", requireAuth(), async (req, res) => {
+router.get("/:categoryId", async (req, res) => {
   try {
     const id = parseInt(req.params.categoryId);
 

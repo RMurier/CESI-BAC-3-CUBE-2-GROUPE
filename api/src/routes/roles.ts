@@ -1,13 +1,11 @@
 import express from "express";
 import prisma from "../utils/database";
-import { requireAuth } from "@clerk/express";
 import { checkRole } from "../middlewares/roleCheck";
 
 const router = express.Router();
 
 router.get(
   "/",
-  requireAuth(),
   checkRole(["Admin"]) as any,
   async (req: any, res: any) => {
     try {
