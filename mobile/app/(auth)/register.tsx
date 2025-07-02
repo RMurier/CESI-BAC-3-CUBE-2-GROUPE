@@ -122,6 +122,7 @@ const Register = () => {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              autoCapitalize="none"
               style={styles.inputField}
             />
 

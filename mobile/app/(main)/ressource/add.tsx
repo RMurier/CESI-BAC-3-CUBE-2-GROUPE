@@ -82,7 +82,6 @@ const AddRessourcePage = () => {
         }
       } catch (error) {
         Alert.alert("Erreur", "Impossible de charger les données nécessaires");
-        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -149,7 +148,6 @@ const AddRessourcePage = () => {
         "Erreur",
         "Impossible de créer la ressource. Veuillez réessayer."
       );
-      console.error("Error creating resource:", error);
     } finally {
       setIsSaving(false);
     }

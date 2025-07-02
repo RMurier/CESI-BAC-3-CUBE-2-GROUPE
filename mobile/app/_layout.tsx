@@ -1,28 +1,24 @@
-import { Redirect, Slot, Stack, useRouter, useSegments } from "expo-router";
+import { Slot, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
-import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "../utils/tokenCache";
-import AuthContextProvider from "../contexts/AuthContext";
-import { NavigationContainer } from "@react-navigation/native";
 
 const InitialLayout = () => {
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
-  // useEffect(() => {
-  //   if (!isLoaded) return;
+  useEffect(() => {
+    if (!isLoaded) return;
 
-  //   const inTabsGroup = segments[0] === "(main)";
+    const inApp = segments[0]?.startsWith("(main)");
 
-  //   // console.log("User changed: ", isSignedIn);
-
-  //   if (isSignedIn && !inTabsGroup) {
-  //     router.replace("/home");
-  //   } else if (!isSignedIn) {
-  //     router.replace("/login");
-  //   }
-  // }, [isSignedIn]);
+    if (isSignedIn && !inApp) {
+      router.replace("/home");
+    } else if (!isSignedIn) {
+      router.replace("/login");
+    }
+  }, [isLoaded, isSignedIn]);
 
   return <Slot />;
 };
@@ -31,10 +27,11 @@ export default function RootLayout() {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
   if (!publishableKey) {
-    throw new Error("Missing Publishable key for Clerk.");
+    throw new Error("Missing Clerk publishable key");
   }
+
   return (
-    <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <InitialLayout />
     </ClerkProvider>
   );

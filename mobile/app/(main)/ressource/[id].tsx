@@ -76,10 +76,6 @@ export default function ResourceDetailScreen() {
       const result = await response.json();
       setResource(result.data);
     } catch (err) {
-      console.error(
-        "Erreur lors de la récupération des détails de la ressource:",
-        err
-      );
       setError("Impossible de charger les détails de la ressource.");
     } finally {
       setLoading(false);
@@ -179,7 +175,7 @@ export default function ResourceDetailScreen() {
 
       setComments(sortedRootComments);
     } catch (err) {
-      console.error("Erreur lors de la récupération des commentaires:", err);
+      Alert.alert("Erreur lors de la récupération des commentaires");
     } finally {
       setRefreshing(false);
     }
@@ -241,7 +237,6 @@ export default function ResourceDetailScreen() {
         }).start();
       }, 100);
     } catch (err) {
-      console.error("Erreur lors de l'envoi du commentaire:", err);
       Alert.alert(
         "Erreur",
         "Impossible d'envoyer votre commentaire. Veuillez réessayer plus tard."

@@ -89,21 +89,23 @@ export default function ResourcesScreen() {
   const fetchResources = async () => {
     try {
       setLoading(true);
-  
+
       let response;
-  
+
       if (userId) {
         response = await fetch(
-          `${apiUrl}/ressources/accessible?clerkUserId=${encodeURIComponent(userId)}`
+          `${apiUrl}/ressources/accessible?clerkUserId=${encodeURIComponent(
+            userId
+          )}`
         );
       } else {
         response = await fetch(`${apiUrl}/ressources/public`);
       }
-  
+
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
-  
+
       const result = await response.json();
       const resourcesList = result.data || ([] as RessourceEntity[]);
       setResources(resourcesList);
@@ -118,7 +120,7 @@ export default function ResourcesScreen() {
       setLoading(false);
     }
   };
-  
+
   const fetchResourceTypes = async () => {
     try {
       setTypesLoading(true);
@@ -148,7 +150,7 @@ export default function ResourcesScreen() {
       const result = await getCategories();
       setAvailableCategories(result || []);
     } catch (err) {
-      console.error("Erreur lors de la récupération des catégories:", err);
+      alert("Erreur lors de la récupération des catégories:");
       // Fallback to extracting from resources if API call fails
       const categories = [
         ...new Set(resources.map((item) => item.category).filter(Boolean)),
@@ -213,6 +215,7 @@ export default function ResourcesScreen() {
   };
 
   const renderFilterChip = (
+    keyValue: string | number,
     label: string,
     isSelected: boolean,
     onPress: (event: GestureResponderEvent) => void
@@ -237,16 +240,25 @@ export default function ResourcesScreen() {
     <View style={styles.filterSection}>
       <Text style={styles.filterLabel}>Catégories:</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {renderFilterChip("Tous", selectedCategory?.name === "", () =>
-          setSelectedCategory(undefined)
+        {renderFilterChip(
+          "all-categories",
+          "Tous",
+          selectedCategory?.name === "",
+          () => setSelectedCategory(undefined)
         )}
+
         {availableCategories.map((category) =>
-          renderFilterChip(category.name, selectedCategory === category, () => {
-            setSelectedCategory(
-              selectedCategory === category ? undefined : category
-            );
-            filterResources();
-          })
+          renderFilterChip(
+            `category-${category.id}`,
+            category.name,
+            selectedCategory?.id === category.id,
+            () => {
+              setSelectedCategory(
+                selectedCategory?.id === category.id ? undefined : category
+              );
+              filterResources();
+            }
+          )
         )}
       </ScrollView>
     </View>
@@ -256,12 +268,17 @@ export default function ResourcesScreen() {
     <View style={styles.filterSection}>
       <Text style={styles.filterLabel}>Types:</Text>
       <View style={styles.chipContainer}>
-        {renderFilterChip("Tous", !selectedType, () =>
+        {renderFilterChip("all-types", "Tous", !selectedType, () =>
           setSelectedType(undefined)
         )}
+
         {availableTypes.map((type) =>
-          renderFilterChip(type.name, selectedType === type, () =>
-            setSelectedType(selectedType === type ? undefined : type)
+          renderFilterChip(
+            `type-${type.id}`,
+            type.name,
+            selectedType?.id === type.id,
+            () =>
+              setSelectedType(selectedType?.id === type.id ? undefined : type)
           )
         )}
       </View>
@@ -363,8 +380,11 @@ export default function ResourcesScreen() {
                 if (ressources) {
                   setResources(ressources);
                 }
+                console.log(1)
                 fetchResourceTypes();
+                console.log(2)
                 fetchCategories();
+                console.log(3)
               } catch (e) {
                 console.log(e);
                 setError(
