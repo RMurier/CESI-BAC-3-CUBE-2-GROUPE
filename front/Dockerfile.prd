@@ -9,5 +9,5 @@ COPY . .
 
 RUN npm run build
 
-EXPOSE 5172
+EXPOSE 5173
 CMD ["npx", "serve", "dist", "-l", "80"]
