@@ -25,6 +25,10 @@ jobs:
         working-directory: api
         run: npm install --legacy-peer-deps
 
+      - name: Make jest executable
+        working-directory: api
+        run: chmod +x node_modules/.bin/jest
+
       - name: Run API tests
         working-directory: api
         run: npx jest
