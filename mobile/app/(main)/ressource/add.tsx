@@ -19,11 +19,7 @@ import { RadioButton } from "react-native-paper";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 // Import de vos services API
-import {
-  createRessource,
-  getCategories,
-  getRessourceTypes,
-} from "../../../services/api";
+import { useApiWithAuth } from "../../../services/api";
 import { useUser } from "@clerk/clerk-expo";
 
 interface Category {
@@ -52,7 +48,8 @@ const AddRessourcePage = () => {
   // États pour les données
   const [categories, setCategories] = useState<Category[]>([]);
   const [ressourceTypes, setRessourceTypes] = useState<RessourceType[]>([]);
-
+  const { getCategories, getRessourceTypes, createRessource } =
+    useApiWithAuth();
   // Validation d'erreurs
   const [errors, setErrors] = useState({
     title: "",
@@ -88,6 +85,7 @@ const AddRessourcePage = () => {
     };
 
     fetchData();
+    console.log("ressourceTypes", ressourceTypes);
   }, []);
 
   const validateForm = () => {

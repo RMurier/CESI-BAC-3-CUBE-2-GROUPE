@@ -19,7 +19,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
 import { RessourceEntity } from "../../../types/ressources";
 import { CommentEntity } from "../../../types/comment";
-import { changeLike, getCurrentUser } from "../../../services/api";
+import { useApiWithAuth } from "../../../services/api";
 import { UserEntity } from "../../../types/user";
 
 type CommentWithReplies = CommentEntity & {
@@ -48,14 +48,20 @@ export default function ResourceDetailScreen() {
   const [showShareList, setShowShareList] = useState(false);
   const [currentDbUser, setCurrentDbUser] = useState<UserEntity | null>(null);
 
-
   // Animation pour les nouveaux commentaires
   const fadeAnim = useRef(new Animated.Value(1)).current;
-
+  const {
+    changeLike,
+    createRessource,
+    getCategories,
+    getCurrentUser,
+    getRessourceTypes,
+    getRessources,
+  } = useApiWithAuth();
   useEffect(() => {
     fetchResourceDetails();
     fetchComments();
-    loadCurrentUser()
+    loadCurrentUser();
   }, [id]);
 
   useEffect(() => {
@@ -115,7 +121,6 @@ export default function ResourceDetailScreen() {
       Alert.alert("Erreur", "Impossible de partager la ressource.");
     }
   };
-
 
   const fetchComments = async () => {
     try {
@@ -444,49 +449,47 @@ export default function ResourceDetailScreen() {
           Détails de la ressource
         </Text>
         {currentDbUser?.id === resource?.userId && (
-    <TouchableOpacity
-      onPress={() => {
-        fetchUsers();
-        setShowShareList(!showShareList);
-      }}
-    >
-      <Ionicons name="person-add" size={24} color="#0066cc" />
-    </TouchableOpacity>
-  )}
+          <TouchableOpacity
+            onPress={() => {
+              fetchUsers();
+              setShowShareList(!showShareList);
+            }}
+          >
+            <Ionicons name="person-add" size={24} color="#0066cc" />
+          </TouchableOpacity>
+        )}
       </View>
 
       {showShareList && (
-  <View style={{ padding: 16, backgroundColor: "#f0f0f0" }}>
-    <Text style={{ marginBottom: 8, fontWeight: "bold" }}>
-      Partager avec :
-    </Text>
+        <View style={{ padding: 16, backgroundColor: "#f0f0f0" }}>
+          <Text style={{ marginBottom: 8, fontWeight: "bold" }}>
+            Partager avec :
+          </Text>
 
-    {users.length === 0 ? (
-      <Text style={{ fontStyle: "italic", color: "#888" }}>
-        Aucun utilisateur à afficher.
-      </Text>
-    ) : (
-      users
-        .filter((u) => u.id !== currentDbUser?.id)
-        .map((u) => (
-          <TouchableOpacity
-            key={u.id}
-            onPress={() => shareWithUser(u.id)}
-            style={{
-              backgroundColor: "#fff",
-              padding: 12,
-              borderBottomWidth: 1,
-              borderBottomColor: "#ddd",
-            }}
-          >
-            <Text>{u.name || u.email}</Text>
-          </TouchableOpacity>
-        ))
-    )}
-  </View>
-)}
-
-
+          {users.length === 0 ? (
+            <Text style={{ fontStyle: "italic", color: "#888" }}>
+              Aucun utilisateur à afficher.
+            </Text>
+          ) : (
+            users
+              .filter((u) => u.id !== currentDbUser?.id)
+              .map((u) => (
+                <TouchableOpacity
+                  key={u.id}
+                  onPress={() => shareWithUser(u.id)}
+                  style={{
+                    backgroundColor: "#fff",
+                    padding: 12,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#ddd",
+                  }}
+                >
+                  <Text>{u.name || u.email}</Text>
+                </TouchableOpacity>
+              ))
+          )}
+        </View>
+      )}
 
       <ScrollView
         ref={scrollViewRef}
@@ -597,7 +600,7 @@ export default function ResourceDetailScreen() {
             style={[
               styles.sendButton,
               (!newComment.trim() || submittingComment) &&
-              styles.sendButtonDisabled,
+                styles.sendButtonDisabled,
             ]}
             onPress={submitComment}
             disabled={!newComment.trim() || submittingComment}

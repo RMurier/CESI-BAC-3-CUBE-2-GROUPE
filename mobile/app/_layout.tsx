@@ -12,6 +12,9 @@ const InitialLayout = () => {
     if (!isLoaded) return;
 
     const inApp = segments[0]?.startsWith("(main)");
+    const inTabsGroup = segments[0] === "(main)";
+
+    // console.log("User changed: ", isSignedIn);
 
     if (isSignedIn && !inApp) {
       router.replace("/home");
