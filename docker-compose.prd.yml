@@ -31,7 +31,7 @@ services:
       context: ./front
       dockerfile: Dockerfile.prd
       args:
-        - VITE_BASE_URL=http://54.87.120.225:4000
+        - VITE_BASE_URL: http://54.87.120.225:4000
     environment:
       - VITE_BASE_URL=http://54.87.120.225:4000
     depends_on:
@@ -45,7 +45,6 @@ services:
       - "80:80"
     volumes:
       - ./nginx/nginx.prd.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/certs:/etc/nginx/certs
     depends_on:
       - api
       - admin
