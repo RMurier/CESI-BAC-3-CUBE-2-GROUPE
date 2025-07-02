@@ -31,7 +31,7 @@ export default function HomeLayout() {
           ),
         }}
       />
-      <Tabs.Screen name="categories/[name]" options={{ headerShown: false, href: null }} />
+      {/* <Tabs.Screen name="categories/[name]" options={{ headerShown: false, href: null }} /> */}
       <Tabs.Screen name="categories" options={{ headerShown: false, href: null }} />
     </Tabs>
   );

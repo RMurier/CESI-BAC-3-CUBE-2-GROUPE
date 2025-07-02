@@ -147,7 +147,7 @@ export default function ResourcesScreen() {
       const result = await getCategories();
       setAvailableCategories(result || []);
     } catch (err) {
-      console.error("Erreur lors de la récupération des catégories:", err);
+      alert("Erreur lors de la récupération des catégories:");
       // Fallback to extracting from resources if API call fails
       const categories = [
         ...new Set(resources.map((item) => item.category).filter(Boolean)),
@@ -212,6 +212,7 @@ export default function ResourcesScreen() {
   };
 
   const renderFilterChip = (
+    keyValue: string | number,
     label: string,
     id: string,
     isSelected: boolean,
@@ -237,17 +238,21 @@ export default function ResourcesScreen() {
     <View style={styles.filterSection}>
       <Text style={styles.filterLabel}>Catégories:</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {renderFilterChip("Tous", "-1", selectedCategory?.name === "", () =>
-          setSelectedCategory(undefined)
+        {renderFilterChip(
+          "all-categories",
+          "Tous",
+          selectedCategory?.name === "",
+          () => setSelectedCategory(undefined)
         )}
+
         {availableCategories.map((category) =>
           renderFilterChip(
+            `category-${category.id}`,
             category.name,
-            category.id.toString(),
-            selectedCategory === category,
+            selectedCategory?.id === category.id,
             () => {
               setSelectedCategory(
-                selectedCategory === category ? undefined : category
+                selectedCategory?.id === category.id ? undefined : category
               );
               filterResources();
             }
@@ -261,15 +266,17 @@ export default function ResourcesScreen() {
     <View style={styles.filterSection}>
       <Text style={styles.filterLabel}>Types:</Text>
       <View style={styles.chipContainer}>
-        {renderFilterChip("Tous", "all", !selectedType, () =>
+        {renderFilterChip("all-types", "Tous", !selectedType, () =>
           setSelectedType(undefined)
         )}
+
         {availableTypes.map((type) =>
           renderFilterChip(
+            `type-${type.id}`,
             type.name,
-            type.id.toString(),
-            selectedType === type,
-            () => setSelectedType(selectedType === type ? undefined : type)
+            selectedType?.id === type.id,
+            () =>
+              setSelectedType(selectedType?.id === type.id ? undefined : type)
           )
         )}
       </View>
@@ -371,8 +378,11 @@ export default function ResourcesScreen() {
                 if (ressources) {
                   setResources(ressources);
                 }
+                console.log(1);
                 fetchResourceTypes();
+                console.log(2);
                 fetchCategories();
+                console.log(3);
               } catch (e) {
                 console.log(e);
                 setError(
