@@ -25,6 +25,15 @@ jobs:
         working-directory: api
         run: npm install --legacy-peer-deps
 
+      - name: Run API tests
+        working-directory: api
+        run: npm test
+
+      # Décommente si tu veux exécuter les tests du front aussi
+      # - name: Run Front tests
+      #   working-directory: front
+      #   run: npm test
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
