@@ -70,6 +70,7 @@ const AddRessourcePage = () => {
           getCategories(),
           getRessourceTypes(),
         ]);
+        console.log(typesData)
         setCategories(categoriesData);
         setRessourceTypes(typesData);
 
