@@ -70,9 +70,17 @@ const AddRessourcePage = () => {
           getCategories(),
           getRessourceTypes(),
         ]);
-        console.log(typesData)
-        setCategories(categoriesData);
-        setRessourceTypes(typesData);
+        const uniqueCategories = categoriesData.filter(
+          (type, index, self) =>
+            index === self.findIndex((t) => t.name === type.name)
+        );
+        setCategories(uniqueCategories);
+        const uniqueTypes = typesData.filter(
+          (type, index, self) =>
+            index === self.findIndex((t) => t.name === type.name)
+        );
+
+      setRessourceTypes(uniqueTypes);
 
         // Définir des valeurs par défaut
         if (categoriesData.length > 0) {
