@@ -3,14 +3,6 @@ import express from "express";
 import usersRouter from "../routes/users";
 import prisma from "../utils/database";
 
-// Mock de Clerk
-jest.mock("@clerk/express", () => ({
-  requireAuth: () => (req: any, res: any, next: any) => {
-    req.auth = { userId: "test-user-id" };
-    next();
-  },
-}));
-
 // Mock de Prisma
 jest.mock("../utils/database", () => ({
   __esModule: true,

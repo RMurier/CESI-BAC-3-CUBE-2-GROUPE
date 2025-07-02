@@ -11,8 +11,6 @@ import roles from "./routes/roles";
 import categories from "./routes/categories";
 import helmet from "helmet";
 import cors from "cors";
-import { clerkMiddleware, requireAuth } from "@clerk/express";
-import { checkRole } from "./middlewares/roleCheck";
 
 async function main() {
   const app = express();
@@ -26,7 +24,6 @@ async function main() {
   app.use(express.json());
   app.use(helmet());
   app.use(express.urlencoded({ extended: false }));
-  app.use(clerkMiddleware());
 
   const jwtSecret = process.env.JWT_SECRET;
   // ROUTES
