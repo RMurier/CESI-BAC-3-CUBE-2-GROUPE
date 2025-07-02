@@ -25,6 +25,14 @@ jobs:
         working-directory: api
         run: npm install --legacy-peer-deps
 
+      - name: Make jest executable
+        working-directory: api
+        run: chmod +x node_modules/.bin/jest
+
+      - name: Run API tests
+        working-directory: api
+        run: npx jest
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
@@ -136,4 +144,3 @@ jobs:
             cd ~/prd
             git pull origin master
             sudo docker compose -f docker-compose.prd.yml up -d --build
-            
