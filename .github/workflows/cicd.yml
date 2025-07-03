@@ -168,6 +168,6 @@ jobs:
 
       - name: 🚀 Build app (Android)
         working-directory: mobile
-        run: eas build --non-interactive --platform android --profile production
+        run: eas build --platform android --profile production
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
