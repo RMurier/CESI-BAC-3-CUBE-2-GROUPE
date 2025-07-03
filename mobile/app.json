@@ -1,8 +1,8 @@
 {
   "expo": {
-    "scheme": "cesizen",
-    "name": "mobile",
-    "slug": "mobile",
+    "scheme": "bac-3-cube-2-groupe",
+    "name": "bac-3-cube-2-groupe",
+    "slug": "bac-3-cube-2-groupe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,6 +25,16 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-secure-store", "expo-router"]
+    "plugins": [
+      "expo-secure-store",
+      "expo-router"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7cc548bf-8419-4805-a934-88ef994d325d"
+      }
+    },
+    "owner": "zyco"
   }
 }
