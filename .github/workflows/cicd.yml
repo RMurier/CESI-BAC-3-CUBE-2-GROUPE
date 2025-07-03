@@ -141,7 +141,7 @@ jobs:
             git pull origin master
             sudo docker compose -f docker-compose.prd.yml up -d --build
 
-build-mobile:
+  build-mobile:
     name: Build APK for Mobile App
     runs-on: ubuntu-latest
 
