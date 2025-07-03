@@ -25,7 +25,7 @@ export const Home = () => {
       </h1>
       <p className="text-gray-600 mb-6">
         Bienvenue sur le back office de{" "}
-        <span className="font-semibold">CUBE 2 GROUPE</span>.
+        <span className="font-semibold">CUBE 2 GROUPE test</span>.
       </p>
     </div>
   );
