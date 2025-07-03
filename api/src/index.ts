@@ -35,9 +35,9 @@ async function main() {
   app.use("/stats", stats);
   app.use("/comments", comments);
 
-  // app.get("/", (req, res) => {
-  //   res.send("Hello World!");
-  // });
+  app.get("/", (req, res) => {
+    res.send("Hello World!");
+  });
 
   app.listen(port, "0.0.0.0", () => {
     console.log(`App running and listening on http://localhost:${port}`);
