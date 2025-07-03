@@ -17,7 +17,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.zyco.bac3cube2groupe", // <- requis pour build APK
+      "package": "com.zyco.bac3cube2groupe",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -35,6 +35,9 @@
       "eas": {
         "projectId": "7cc548bf-8419-4805-a934-88ef994d325d"
       }
+    },
+    "cli": {
+      "appVersionSource": "project"
     },
     "owner": "zyco"
   }
